@@ -51,7 +51,7 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
     private double shootingStartedTime = 0;
     private final double DROP_TIME = .05;
 
-    private TorquePersistentBoolean shooterReady = new TorquePersistentBoolean(5), turretLocked = new TorquePersistentBoolean(5);
+    private TorquePersistentBoolean ready = new TorquePersistentBoolean(5), locked = new TorquePersistentBoolean(5);
 
     @Override
     public final void update(final TorqueMode mode) {
@@ -71,11 +71,10 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
             shootingStarted = false;
         }
 
-        shooterReady.add(shooter.isReady());
-        turretLocked.add(turret.isLocked());
+        ready.add(shooter.isReady());
+        locked.add(drivebase.isLocked());
 
-        // if (shooter.isReady() && turret.isLocked()) {
-        if (shooterReady.any() && turretLocked.any()) {
+        if (ready.any() && locked.any()) {
             beltDirection = MAG_UP;
             gateDirection = TorqueDirection.FORWARD;
         }

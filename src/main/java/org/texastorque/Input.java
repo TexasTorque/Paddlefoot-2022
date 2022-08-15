@@ -11,15 +11,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import org.texastorque.subsystems.Climber.ManualClimbState;
-import org.texastorque.subsystems.Climber.ManualWinchState;
 import org.texastorque.subsystems.Drivebase;
 import org.texastorque.subsystems.Shooter;
-import org.texastorque.subsystems.Drivebase.DrivebaseState;
 import org.texastorque.subsystems.Intake.IntakeState;
 import org.texastorque.subsystems.Magazine;
 import org.texastorque.subsystems.Shooter.ShooterState;
-import org.texastorque.subsystems.Turret.TurretState;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueInput;
 import org.texastorque.torquelib.control.TorqueClick;
@@ -50,7 +46,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         updateIntake();
         updateMagazine();
         updateShooter();
-        updateClimber();
     }
 
     private final TorqueTraversableSelection<Double> 
@@ -77,8 +72,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
     private final void updateDrivebase() {
         SmartDashboard.putNumber("Speed Shifter", (rotationalSpeeds.get() - .5) *  2.); 
-
-        drivebase.setState(driver.getRightCenterButton() ? DrivebaseState.X_FACTOR : DrivebaseState.FIELD_RELATIVE);
 
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
         double rotationRequested = -driver.getRightXAxis();
@@ -167,57 +160,13 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         
         if (driver.getLeftTrigger()) {
             shooter.setState(ShooterState.REGRESSION);
-            turret.setState(TurretState.TRACK);
         } else if (driver.getXButton()) {
             shooter.setState(ShooterState.SETPOINT);
             shooter.setFlywheelSpeed(1600);
             shooter.setHoodPosition(30);
-            turret.setState(TurretState.CENTER);
         } else {
             shooter.setState(ShooterState.OFF);
-            turret.setState(TurretState.OFF);
         }
-    }
-
-    private final TorqueClick toggleClimberHooks = new TorqueClick();
-    private boolean servoEnabled = true;
-
-    private final void updateClimber() {
-        if (driver.getLeftCenterButton()) climber.reset();
-
-        updateManualArmControls(driver);
-        updateManualWinchControls(driver);
-
-        climber.setAuto(driver.getRightCenterButton());
-
-        if (toggleClimberHooks.calculate(driver.getYButton())) 
-            climber.setServos(servoEnabled = !servoEnabled);
-
-        SmartDashboard.putBoolean("Servos", servoEnabled);
-    }
-
-    // private final void updateManualArmControls(final TorqueController controller) {
-    private final void updateManualArmControls(final GenericController controller) {
-        if (controller.getDPADDown())
-            climber.setManual(ManualClimbState.BOTH_DOWN);
-        else if (controller.getDPADUp())
-            climber.setManual(ManualClimbState.BOTH_UP);
-        else if (controller.getDPADRight())
-            climber.setManual(ManualClimbState.ZERO_RIGHT);
-        else if (controller.getDPADLeft())
-            climber.setManual(ManualClimbState.ZERO_LEFT);
-        else
-            climber.setManual(ManualClimbState.OFF);
-    }
-
-    // private final void updateManualWinchControls(final TorqueController controller) {
-    private final void updateManualWinchControls(final GenericController controller) {
-        if (controller.getBButton() && controller.getDPADUp())
-            climber.setWinch(ManualWinchState.OUT);
-        else if (controller.getBButton() && controller.getDPADDown())
-            climber.setWinch(ManualWinchState.IN);
-        else
-            climber.setWinch(ManualWinchState.OFF);
     }
 
 

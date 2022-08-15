@@ -19,7 +19,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.photonvision.PhotonUtils;
 import org.texastorque.Ports;
 import org.texastorque.Subsystems;
-import org.texastorque.subsystems.Turret.TurretState;
 import org.texastorque.torquelib.base.TorqueMode;
 import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.base.TorqueSubsystemState;
@@ -208,16 +207,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     public final double calculateDistance() { 
         return TorqueLight.getDistanceToElevatedTarget(camera, CAMERA_HEIGHT, TARGET_HEIGHT, CAMERA_ANGLE);
-    }
-
-    public final Pose2d getEstimatedPositionRelativeToRobot() { 
-        final Transform2d targetRelativeToCamera = camera.getCameraToTarget();
-        final Transform2d targetRelativeToCenterOfHub = targetRelativeToCamera.plus(TRANSFORM_ADJUSTMENT);
-
-        final Pose2d estimatedPositionOfRobot = PhotonUtils.estimateFieldToRobot(targetRelativeToCenterOfHub,
-                HUB_ORIGIN, new Transform2d(CAMERA_TO_ROBOT, Rotation2d.fromDegrees(-turret.getDegrees())));
-
-        return estimatedPositionOfRobot;
     }
     
     public static final synchronized Shooter getInstance() {

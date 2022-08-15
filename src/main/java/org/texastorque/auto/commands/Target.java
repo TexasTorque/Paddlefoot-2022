@@ -9,7 +9,6 @@ package org.texastorque.auto.commands;
 import edu.wpi.first.wpilibj.Timer;
 import org.texastorque.Subsystems;
 import org.texastorque.subsystems.Shooter.ShooterState;
-import org.texastorque.subsystems.Turret.TurretState;
 import org.texastorque.torquelib.auto.TorqueCommand;
 import org.texastorque.torquelib.base.TorqueDirection;
 
@@ -31,7 +30,7 @@ public final class Target extends TorqueCommand implements Subsystems {
 
     @Override
     protected final void init() {
-        turret.setState(TurretState.TRACK);
+        drivebase.setTargetting(true);
         if (rpm == -1)
             shooter.setState(ShooterState.REGRESSION);
         else {
@@ -54,7 +53,6 @@ public final class Target extends TorqueCommand implements Subsystems {
     protected final void end() {
         if (stop) {
             shooter.setState(ShooterState.OFF);
-            turret.setState(TurretState.CENTER);
         } else {
             shooter.setState(ShooterState.SETPOINT);
             shooter.setFlywheelSpeed(1000);

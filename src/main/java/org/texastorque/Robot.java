@@ -30,7 +30,6 @@ public final class Robot extends TimedRobot implements Subsystems {
         subsystems.add(intake);
         subsystems.add(magazine);
         subsystems.add(shooter);
-        subsystems.add(turret);
         subsystems.add(climber);
     }
 

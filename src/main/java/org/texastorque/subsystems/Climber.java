@@ -24,6 +24,8 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
     public final void update(final TorqueMode mode) {
     }
 
+    public final boolean hasStarted() { return false; }
+
     public static final synchronized Climber getInstance() {
         return instance == null ? instance = new Climber() : instance;
     }

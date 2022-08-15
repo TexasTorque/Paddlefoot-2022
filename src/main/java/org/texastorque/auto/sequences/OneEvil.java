@@ -18,11 +18,11 @@ import org.texastorque.torquelib.base.TorqueDirection;
 
 public class OneEvil extends TorqueSequence implements Subsystems {
     public OneEvil() {
-        addBlock(new TorqueBlock(new Shoot(1350, 10, 0, true, 3)));
+        addBlock(new TorqueBlock(new Shoot(1350, 10, true, 3)));
         addBlock(new TorqueBlock(new Path("One1", true, 1, .5),
                                  new TorqueExecute(() -> { intake.setState(IntakeState.INTAKE); })));
         addBlock(new TorqueBlock(new Path("One2", false, 1, .5)));
-        addBlock(new TorqueBlock(new Shoot(1200, 30, -135, true, 1)));
+        addBlock(new TorqueBlock(new Shoot(1200, 30, true, 1)));
         addBlock(new TorqueBlock(new TorqueExecute(() -> {
             magazine.setBeltDirection(TorqueDirection.OFF);
             intake.setState(IntakeState.PRIMED);
