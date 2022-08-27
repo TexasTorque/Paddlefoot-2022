@@ -6,22 +6,13 @@
  */
 package org.texastorque.auto;
 
-import org.texastorque.auto.sequences.FiveCool;
-import org.texastorque.auto.sequences.Omar;
-import org.texastorque.auto.sequences.OneEvil;
-import org.texastorque.auto.sequences.TwoEvil;
 import org.texastorque.torquelib.auto.TorqueAutoManager;
 
 public final class AutoManager extends TorqueAutoManager {
     private static volatile AutoManager instance;
 
     @Override
-    protected final void init() {
-        addSequence("Omar", new Omar());
-        addSequence("One (evil)", new OneEvil());
-        addSequence("Two (evil)", new TwoEvil());
-        addSequence("Five (cool)", new FiveCool());
-    }
+    protected final void init() {}
 
     /**
      * Get the AutoManager instance
