@@ -6,13 +6,16 @@
  */
 package org.texastorque.auto;
 
+import org.texastorque.auto.sequences.Jacob;
 import org.texastorque.torquelib.auto.TorqueAutoManager;
 
 public final class AutoManager extends TorqueAutoManager {
     private static volatile AutoManager instance;
 
     @Override
-    protected final void init() {}
+    protected final void init() {
+        addSequence("Jacob", new Jacob());
+    }
 
     /**
      * Get the AutoManager instance

@@ -85,8 +85,10 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         SmartDashboard.putNumber("PID O", rotationRequested);
         SmartDashboard.putNumber("Rot Delta", rotationReal - lastRotation);
 
-        drivebase.setSpeedCoefs(translationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()),
-                rotationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()));
+        // drivebase.setSpeedCoefs(translationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()),
+                // rotationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()));
+        
+        drivebase.setSpeedCoefs(1, 1);
 
         final boolean noInput = TorqueMath.toleranced(driver.getLeftYAxis(), DEADBAND) 
                 && TorqueMath.toleranced(driver.getLeftXAxis(), DEADBAND) 

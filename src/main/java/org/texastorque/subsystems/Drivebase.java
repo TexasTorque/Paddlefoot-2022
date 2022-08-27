@@ -37,8 +37,8 @@ import org.texastorque.torquelib.util.TorqueSwerveOdometry;
 public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static volatile Drivebase instance;
 
-    public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 4, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 2,
-                               DRIVE_MAX_ROTATIONAL_SPEED = 6, TOLERANCE = 5;
+    public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 48, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 48,
+                               DRIVE_MAX_ROTATIONAL_SPEED = 48 * Math.PI, TOLERANCE = 5;
 
     private static final double DRIVE_GEARING = .1875, // Drive rotations per motor rotations
             DRIVE_WHEEL_RADIUS = Units.inchesToMeters(1.788), DISTANCE_TO_CENTER_X = Units.inchesToMeters(10.875),
@@ -75,18 +75,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         this.shouldTarget = shouldTarget; 
     }
 
-    // private final PIDController targetPID = TorquePID.create(.02 / 4).addDerivative(.001)
-    // .build().createPIDController((pid) -> {
-    //     pid.enableContinuousInput(0, 360);
-    //     return pid;
-    // });
-
     private final PIDController targetPID = TorquePID.create(.1039).addOutputRange(-4, 4).build().createPIDController();
-    // private final PIDController targetPID = TorquePID.create(.1039).build().createPIDController((pid) -> {
-        // pid.enableContinuousInput(0, 360);
-        // return pid;
-    // });
-
+  
     private Drivebase() {
         backLeft = buildSwerveModule(0, Ports.DRIVEBASE.TRANSLATIONAL.LEFT.BACK, Ports.DRIVEBASE.ROTATIONAL.LEFT.BACK);
         backLeft.setLogging(true);
@@ -130,6 +120,11 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                     speeds.vyMetersPerSecond * translatingSpeed, speeds.omegaRadiansPerSecond * rotaitonalSpeed, 
                     gyro.getRotation2dClockwise());
 
+        SmartDashboard.putNumber("DB_Roll", (Rotation2d.fromDegrees(gyro.getRoll())).getDegrees());
+        SmartDashboard.putNumber("DB_Pitch", (Rotation2d.fromDegrees(gyro.getPitch())).getDegrees());
+        SmartDashboard.putNumber("DB_Yaw", (Rotation2d.fromDegrees(gyro.getYaw())).getDegrees());
+        SmartDashboard.putNumber("DB_R2DCW", (gyro.getRotation2dClockwise()).getDegrees());
+
         if (shooter.isShooting() && shouldTarget)
             speeds.omegaRadiansPerSecond = targetPID.calculate(shooter.getCamera().getTargetYaw(), 0);
 
@@ -139,9 +134,9 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         // TorqueSwerveModule2021.equalizedDriveRatio(swerveModuleStates, DRIVE_MAX_TRANSLATIONAL_SPEED);
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DRIVE_MAX_TRANSLATIONAL_SPEED);
 
-        frontLeft.setDesiredState(swerveModuleStates[2]);
+        frontLeft.setDesiredState(swerveModuleStates[0]);
         frontRight.setDesiredState(swerveModuleStates[1]);
-        backLeft.setDesiredState(swerveModuleStates[0]);
+        backLeft.setDesiredState(swerveModuleStates[2]);
         backRight.setDesiredState(swerveModuleStates[3]);
 
         odometry.update(gyro.getRotation2dClockwise().times(-1), frontLeft.getState(), frontRight.getState(),
