@@ -120,10 +120,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                     speeds.vyMetersPerSecond * translatingSpeed, speeds.omegaRadiansPerSecond * rotaitonalSpeed, 
                     gyro.getRotation2dClockwise());
 
-        SmartDashboard.putNumber("DB_Roll", (Rotation2d.fromDegrees(gyro.getRoll())).getDegrees());
-        SmartDashboard.putNumber("DB_Pitch", (Rotation2d.fromDegrees(gyro.getPitch())).getDegrees());
-        SmartDashboard.putNumber("DB_Yaw", (Rotation2d.fromDegrees(gyro.getYaw())).getDegrees());
-        SmartDashboard.putNumber("DB_R2DCW", (gyro.getRotation2dClockwise()).getDegrees());
+        SmartDashboard.putNumber("Disp", frontLeft.getDisplacement());
 
         if (shooter.isShooting() && shouldTarget)
             speeds.omegaRadiansPerSecond = targetPID.calculate(shooter.getCamera().getTargetYaw(), 0);
@@ -180,4 +177,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     public static final synchronized Drivebase getInstance() {
         return instance == null ? instance = new Drivebase() : instance;
     }
+
+    public final double getDisplacement() { return frontLeft.getDisplacement(); }
 }

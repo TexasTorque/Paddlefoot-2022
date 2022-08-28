@@ -6,12 +6,20 @@
  */
 package org.texastorque.auto.sequences;
 
-import org.texastorque.auto.commands.Path;
+import org.texastorque.Subsystems;
+import org.texastorque.auto.commands.Drive;
 import org.texastorque.torquelib.auto.TorqueBlock;
 import org.texastorque.torquelib.auto.TorqueSequence;
+import org.texastorque.torquelib.auto.commands.TorqueExecute;
 
-public final class Jacob extends TorqueSequence {
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+
+public final class Jacob extends TorqueSequence implements Subsystems {
     public Jacob() {
-        addBlock(new TorqueBlock(new Path("Omar", true, 1.5, .75)));
+        addBlock(new TorqueBlock(new TorqueExecute(() -> {
+                drivebase.getOdometry().resetPosition(new Pose2d(6.1, 5.2, Rotation2d.fromDegrees(135)), Rotation2d.fromDegrees(135));
+        })));
+        addBlock(new TorqueBlock(new Drive(-50., -10)));
     }
 }
