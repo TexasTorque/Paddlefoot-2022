@@ -28,6 +28,7 @@ import org.texastorque.torquelib.sensors.TorqueController;
 import org.texastorque.torquelib.sensors.TorqueController.ControllerPort;
 import org.texastorque.torquelib.util.GenericController;
 import org.texastorque.torquelib.util.TorqueMath;
+import org.texastorque.torquelib.util.TorqueUtil;
 
 @SuppressWarnings("deprecation")
 public final class Input extends TorqueInput<GenericController> implements Subsystems {
@@ -68,7 +69,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final TorqueSlewLimiter xLimiter = new TorqueSlewLimiter(5, 10),
                             yLimiter = new TorqueSlewLimiter(5, 10);
 
-    private final static double DEADBAND = .1;
+    private final static double DEADBAND = .04;
 
     private final void updateDrivebase() {
         SmartDashboard.putNumber("Speed Shifter", (rotationalSpeeds.get() - .5) *  2.); 
@@ -99,10 +100,13 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             return;
         }
 
-        final double xVelo = xLimiter.calculate(driver.getLeftYAxis() * Drivebase.DRIVE_MAX_TRANSLATIONAL_SPEED * invertCoefficient);
-        final double yVelo = yLimiter.calculate(-driver.getLeftXAxis() * Drivebase.DRIVE_MAX_TRANSLATIONAL_SPEED * invertCoefficient);
-        final double rVelo = rotationRequested * Drivebase.DRIVE_MAX_ROTATIONAL_SPEED * invertCoefficient;
+        // final double xVelo = xLimiter.calculate(driver.getLeftYAxis() * invertCoefficient);
+        // final double yVelo = yLimiter.calculate(-driver.getLeftXAxis() * invertCoefficient);
+        // final double rVelo = rotationRequested * invertCoefficient;
 
+        final double xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient, xLimiter::calculate);
+        final double yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient, yLimiter::calculate);
+        final double rVelo = rotationRequested * invertCoefficient;
         drivebase.setSpeeds(new ChassisSpeeds(xVelo, yVelo, rVelo));
     }
 

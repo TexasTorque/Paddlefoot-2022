@@ -37,8 +37,8 @@ import org.texastorque.torquelib.util.TorqueSwerveOdometry;
 public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static volatile Drivebase instance;
 
-    public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 48, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 48,
-                               DRIVE_MAX_ROTATIONAL_SPEED = 48 * Math.PI, TOLERANCE = 5;
+    public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 16, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 16,
+                               DRIVE_MAX_ROTATIONAL_SPEED = 16 * Math.PI, TOLERANCE = 5;
 
     private static final double DRIVE_GEARING = .1875, // Drive rotations per motor rotations
             DRIVE_WHEEL_RADIUS = Units.inchesToMeters(1.788), DISTANCE_TO_CENTER_X = Units.inchesToMeters(10.875),
@@ -112,8 +112,10 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-        final double translatingSpeed = shooter.isShooting() ? SHOOTING_TRANSLATIONAL_SPEED_COEF : translationalSpeedCoef;
-        final double rotaitonalSpeed = shooter.isShooting() ? SHOOTING_ROTATIONAL_SPEED_COEF : rotationalSpeedCoef;
+        final double translatingSpeed = (shooter.isShooting() ? SHOOTING_TRANSLATIONAL_SPEED_COEF : translationalSpeedCoef);
+                // * DRIVE_MAX_TRANSLATIONAL_SPEED 
+        final double rotaitonalSpeed = (shooter.isShooting() ? SHOOTING_ROTATIONAL_SPEED_COEF : rotationalSpeedCoef);
+                // * DRIVE_MAX_ROTATIONAL_SPEED 
         
         if (mode.isTeleop()) 
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * translatingSpeed, 
