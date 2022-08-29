@@ -72,7 +72,8 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     private ShooterState state = ShooterState.OFF;
 
     private Shooter() {
-        camera = new TorqueLight();
+        // camera = new TorqueLight();
+        camera = new TorqueLight("gloworm");
 
         flywheel = new TorqueFalcon(Ports.SHOOTER.FLYWHEEL.LEFT);
         flywheel.addFollower(Ports.SHOOTER.FLYWHEEL.RIGHT, true);

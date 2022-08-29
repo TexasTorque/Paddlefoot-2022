@@ -75,7 +75,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         this.shouldTarget = shouldTarget; 
     }
 
-    private final PIDController targetPID = TorquePID.create(.1039).addOutputRange(-4, 4).build().createPIDController();
+    // private final PIDController targetPID = TorquePID.create(.1039).addOutputRange(-4, 4).build().createPIDController();
+    // private final TorquePID targetPID = TorquePID.create(1).build();
   
     private Drivebase() {
         backLeft = buildSwerveModule(0, Ports.DRIVEBASE.TRANSLATIONAL.LEFT.BACK, Ports.DRIVEBASE.ROTATIONAL.LEFT.BACK);
@@ -112,10 +113,10 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-        final double translatingSpeed = (shooter.isShooting() ? SHOOTING_TRANSLATIONAL_SPEED_COEF : translationalSpeedCoef);
-                // * DRIVE_MAX_TRANSLATIONAL_SPEED 
-        final double rotaitonalSpeed = (shooter.isShooting() ? SHOOTING_ROTATIONAL_SPEED_COEF : rotationalSpeedCoef);
-                // * DRIVE_MAX_ROTATIONAL_SPEED 
+        final double translatingSpeed = (shooter.isShooting() ? SHOOTING_TRANSLATIONAL_SPEED_COEF : translationalSpeedCoef)
+                * DRIVE_MAX_TRANSLATIONAL_SPEED;
+        final double rotaitonalSpeed = (shooter.isShooting() ? SHOOTING_ROTATIONAL_SPEED_COEF : rotationalSpeedCoef)
+                * DRIVE_MAX_ROTATIONAL_SPEED;
         
         if (mode.isTeleop()) 
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * translatingSpeed, 
@@ -124,8 +125,13 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
         SmartDashboard.putNumber("Disp", frontLeft.getDisplacement());
 
-        if (shooter.isShooting() && shouldTarget)
-            speeds.omegaRadiansPerSecond = targetPID.calculate(shooter.getCamera().getTargetYaw(), 0);
+        if (shooter.isShooting() && shouldTarget) {
+            // final double n = targetPID.calculate(shooter.getCamera().getTargetYaw(), 0);
+            SmartDashboard.putNumber("YAW__", shooter.getCamera().getTargetYaw());
+            final double n = shooter.getCamera().getTargetYaw() * 50 * DRIVE_MAX_ROTATIONAL_SPEED;
+            SmartDashboard.putNumber("KMS", n);
+            speeds.omegaRadiansPerSecond = n;
+        }
 
         swerveModuleStates = kinematics.toSwerveModuleStates(speeds);
 
