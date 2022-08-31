@@ -30,5 +30,6 @@
   "editor.rulers": [
     120
   ],
-  "editor.inlayHints.enabled": "off"
+  "editor.inlayHints.enabled": "off",
+  "java.jdt.ls.vmargs": "-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx2G -Xms100m -javaagent:\"/Users/justuslanguell/.vscode/extensions/vscjava.vscode-lombok-1.0.1/server/lombok.jar\""
 }

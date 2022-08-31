@@ -14,6 +14,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.photonvision.PhotonUtils;
@@ -208,6 +209,13 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     public final double calculateDistance() { 
         return TorqueLight.getDistanceToElevatedTarget(camera, CAMERA_HEIGHT, TARGET_HEIGHT, CAMERA_ANGLE);
+    }
+
+    public final double getTargetOffset() { 
+        return NetworkTableInstance.getDefault().getTable("photonvision").getEntry("targetYaw").getNumber(0).doubleValue();
+        // return camera.getAverageYaw();
+        // return camera.getTargetYaw();
+
     }
     
     public static final synchronized Shooter getInstance() {

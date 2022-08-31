@@ -75,8 +75,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         this.shouldTarget = shouldTarget; 
     }
 
-    // private final PIDController targetPID = TorquePID.create(.1039).addOutputRange(-4, 4).build().createPIDController();
-    // private final TorquePID targetPID = TorquePID.create(1).build();
+    private final TorquePID targetPID = TorquePID.create(1).build();
   
     private Drivebase() {
         backLeft = buildSwerveModule(0, Ports.DRIVEBASE.TRANSLATIONAL.LEFT.BACK, Ports.DRIVEBASE.ROTATIONAL.LEFT.BACK);
@@ -126,11 +125,13 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putNumber("Disp", frontLeft.getDisplacement());
 
         if (shooter.isShooting() && shouldTarget) {
-            // final double n = targetPID.calculate(shooter.getCamera().getTargetYaw(), 0);
-            SmartDashboard.putNumber("YAW__", shooter.getCamera().getTargetYaw());
-            final double n = shooter.getCamera().getTargetYaw() * 50 * DRIVE_MAX_ROTATIONAL_SPEED;
-            SmartDashboard.putNumber("KMS", n);
-            speeds.omegaRadiansPerSecond = n;
+            final double yaw = shooter.getTargetOffset();
+            // final double output = targetPID.calculate(yaw, 0);
+            final double output = yaw * DRIVE_MAX_ROTATIONAL_SPEED;
+            SmartDashboard.putNumber("Locking PID output", output);
+            speeds.omegaRadiansPerSecond = output;
+
+            // SmartDashboard.putNumber("Locking PID output", (speeds.omegaRadiansPerSecond = shooter.getTargetOffset() * DRIVE_MAX_ROTATIONAL_SPEED));
         }
 
         swerveModuleStates = kinematics.toSwerveModuleStates(speeds);
