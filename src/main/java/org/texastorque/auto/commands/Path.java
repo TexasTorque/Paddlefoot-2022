@@ -24,7 +24,7 @@ public final class Path extends TorqueCommand implements Subsystems {
     private final TorquePID xController = TorquePID.create(1).build();
     private final TorquePID yController = TorquePID.create(1).build();
     private final ProfiledPIDController thetaController =
-            new ProfiledPIDController(4, 0, 0, new TrapezoidProfile.Constraints(6 * Math.PI, 6 * Math.PI));
+            new ProfiledPIDController(1/16, 0, 0, new TrapezoidProfile.Constraints(16 * Math.PI, 16 * Math.PI));
     private final HolonomicDriveController controller =
             new HolonomicDriveController(xController, yController, thetaController);
 

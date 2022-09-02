@@ -212,7 +212,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     }
 
     public final double getTargetOffset() { 
-        return NetworkTableInstance.getDefault().getTable("photonvision").getEntry("targetYaw").getNumber(0).doubleValue();
+        return NetworkTableInstance.getDefault().getTable("photonvision").getSubTable("gloworm").getEntry("targetYaw").getNumber(0).doubleValue();
         // return camera.getAverageYaw();
         // return camera.getTargetYaw();
 

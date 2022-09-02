@@ -8,6 +8,7 @@ package org.texastorque.auto.sequences;
 
 import org.texastorque.Subsystems;
 import org.texastorque.auto.commands.Drive;
+import org.texastorque.auto.commands.Path;
 import org.texastorque.torquelib.auto.TorqueBlock;
 import org.texastorque.torquelib.auto.TorqueSequence;
 import org.texastorque.torquelib.auto.commands.TorqueExecute;
@@ -21,6 +22,7 @@ public final class TwoSimple extends TorqueSequence implements Subsystems {
         addBlock(new TorqueBlock(new TorqueExecute(() -> {
                 drivebase.getOdometry().resetPosition(new Pose2d(6.1, 5.2, Rotation2d.fromDegrees(135)), Rotation2d.fromDegrees(135));
         })));
-        addBlock(new TorqueBlock(new Drive(-50., -5.)));
+        addBlock(new TorqueBlock(new Drive(-50., -8)));
+        // addBlock(new TorqueBlock(new Path("Jacob", true, 4, 4)));
     }
 }

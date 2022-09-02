@@ -40,6 +40,7 @@ public final class Drive extends TorqueCommand implements Subsystems {
         SmartDashboard.putNumber("Drive ∆X", deltaX);
         SmartDashboard.putNumber("Drive ∆Y", deltaY);
         SmartDashboard.putNumber("Drive ∆H", displacment);
+        SmartDashboard.putBoolean("Drive isgud", Math.abs(displacment) >= Math.abs(distance));
         SmartDashboard.putBoolean("Drive isgud", Math.abs(drivebase.getDisplacement()) >= Math.abs(distance));
     }
 
@@ -49,8 +50,8 @@ public final class Drive extends TorqueCommand implements Subsystems {
         final double deltaY = drivebase.getPose().getY() - initial.getY();
         final double displacment = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-        // return Math.abs(displacment) >= Math.abs(distance);
-        return Math.abs(drivebase.getDisplacement()) >= Math.abs(distance);
+        return Math.abs(displacment) >= Math.abs(distance);
+        // return Math.abs(drivebase.getDisplacement()) >= Math.abs(distance);
 
     }
 

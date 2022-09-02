@@ -75,7 +75,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         this.shouldTarget = shouldTarget; 
     }
 
-    private final TorquePID targetPID = TorquePID.create(1).build();
+    private final TorquePID targetPID = TorquePID.create(.375).build();
   
     private Drivebase() {
         backLeft = buildSwerveModule(0, Ports.DRIVEBASE.TRANSLATIONAL.LEFT.BACK, Ports.DRIVEBASE.ROTATIONAL.LEFT.BACK);
@@ -126,8 +126,9 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
         if (shooter.isShooting() && shouldTarget) {
             final double yaw = shooter.getTargetOffset();
-            // final double output = targetPID.calculate(yaw, 0);
-            final double output = yaw * DRIVE_MAX_ROTATIONAL_SPEED;
+            SmartDashboard.putNumber("DBYAW", yaw);
+            final double output = -targetPID.calculate(-yaw, 0);
+            // final double output = -yaw * DRIVE_MAX_ROTATIONAL_SPEED * .02;
             SmartDashboard.putNumber("Locking PID output", output);
             speeds.omegaRadiansPerSecond = output;
 
