@@ -107,6 +107,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     @Override
     public final void initialize(final TorqueMode mode) {
         if (mode.isTeleop()) shouldTarget = true;
+
         reset();
     }
 
@@ -116,17 +117,17 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 * DRIVE_MAX_TRANSLATIONAL_SPEED;
         final double rotaitonalSpeed = (shooter.isShooting() ? SHOOTING_ROTATIONAL_SPEED_COEF : rotationalSpeedCoef)
                 * DRIVE_MAX_ROTATIONAL_SPEED;
-        
+
         if (mode.isTeleop()) 
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * translatingSpeed, 
                     speeds.vyMetersPerSecond * translatingSpeed, speeds.omegaRadiansPerSecond * rotaitonalSpeed, 
                     gyro.getRotation2dClockwise());
 
-        SmartDashboard.putNumber("Disp", frontLeft.getDisplacement());
-
         if (shooter.isShooting() && shouldTarget) {
+            SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
+
             final double yaw = shooter.getTargetOffset();
-            SmartDashboard.putNumber("DBYAW", yaw);
+            SmartDashboard.putNumber("Targeting Yaw", yaw);
             final double output = -targetPID.calculate(-yaw, 0);
             // final double output = -yaw * DRIVE_MAX_ROTATIONAL_SPEED * .02;
             SmartDashboard.putNumber("Locking PID output", output);
