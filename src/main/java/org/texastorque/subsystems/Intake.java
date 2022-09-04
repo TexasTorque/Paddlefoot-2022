@@ -54,8 +54,7 @@ public final class Intake extends TorqueSubsystem implements Subsystems {
 
     private IntakeState state = IntakeState.PRIMED;
 
-    private final TorqueFalcon rollers;
-    private final TorqueSparkMax rotary;
+    private final TorqueSparkMax rollers, rotary;
 
     private Intake() {
         rotary = new TorqueSparkMax(Ports.INTAKE.ROTARY);
@@ -63,7 +62,7 @@ public final class Intake extends TorqueSubsystem implements Subsystems {
         // rotary.configurePID(new KPID(0.1, 0, 0, 0, ROTARY_MIN_SPEED, ROTARY_MAX_SPEED));
         rotary.configurePID(TorquePID.create(.1).addOutputRange(ROTARY_MIN_SPEED, ROTARY_MAX_SPEED).build());
 
-        rollers = new TorqueFalcon(Ports.INTAKE.ROLLER);
+        rollers = new TorqueSparkMax(Ports.INTAKE.ROLLER);
         // rollers.configurePID(new KPID(1, 0, 0, 0, -1, 1));
         rollers.configurePID(TorquePID.create().build());
     }
