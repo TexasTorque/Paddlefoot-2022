@@ -25,6 +25,7 @@ import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.modules.TorqueSwerveModule2021;
 import org.texastorque.torquelib.sensors.TorqueLight;
 import org.texastorque.torquelib.sensors.TorqueNavXGyro;
+import org.texastorque.torquelib.util.TorqueMath;
 import org.texastorque.torquelib.util.TorqueSwerveOdometry;
 
 /**
@@ -125,15 +126,12 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
         if (shooter.isShooting() && shouldTarget) {
             SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
-
+            final double offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5) * 1.;
             final double yaw = shooter.getTargetOffset();
             SmartDashboard.putNumber("Targeting Yaw", yaw);
-            final double output = -targetPID.calculate(-yaw, 0);
-            // final double output = -yaw * DRIVE_MAX_ROTATIONAL_SPEED * .02;
+            final double output = -targetPID.calculate(-yaw, offset);
             SmartDashboard.putNumber("Locking PID output", output);
             speeds.omegaRadiansPerSecond = output;
-
-            // SmartDashboard.putNumber("Locking PID output", (speeds.omegaRadiansPerSecond = shooter.getTargetOffset() * DRIVE_MAX_ROTATIONAL_SPEED));
         }
 
         swerveModuleStates = kinematics.toSwerveModuleStates(speeds);
