@@ -13,11 +13,7 @@ import org.texastorque.torquelib.base.TorqueMode;
 import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.base.TorqueSubsystemState;
 import org.texastorque.torquelib.control.TorquePID;
-import org.texastorque.torquelib.control.TorqueRamp;
-import org.texastorque.torquelib.control.TorqueTimeout;
-import org.texastorque.torquelib.motors.TorqueFalcon;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
-import org.texastorque.torquelib.util.KPID;
 
 /**
  * The intake subsystem.

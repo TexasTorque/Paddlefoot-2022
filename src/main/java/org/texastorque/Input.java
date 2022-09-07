@@ -17,6 +17,7 @@ import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueInput;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueSlewLimiter;
+import org.texastorque.torquelib.control.TorqueToggle;
 import org.texastorque.torquelib.control.TorqueTraversableRange;
 import org.texastorque.torquelib.control.TorqueTraversableSelection;
 import org.texastorque.torquelib.util.GenericController;
@@ -65,6 +66,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             yLimiter = new TorqueSlewLimiter(5, 10);
 
     private final static double DEADBAND = .04;
+    private final TorqueToggle toggleHook = new TorqueToggle();
 
     private final void updateDrivebase() {
         SmartDashboard.putNumber("Speed Shifter", (rotationalSpeeds.get() - .5) * 2.);
@@ -173,7 +175,9 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
     private final void updateClimber() {
         climber.setManualLift(driver.getDPADUp(), driver.getDPADDown());
-        climber.setManualHook(driver.getDPADLeft(), driver.getDPADRight());
+        //climber.setManualHook(driver.getDPADLeft(), driver.getDPADRight());
+        toggleHook.calculate(operator.getYButton());
+        
     }
 
     public static final synchronized Input getInstance() {

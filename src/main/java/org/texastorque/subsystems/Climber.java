@@ -54,6 +54,9 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         else
             hookDirection = TorqueDirection.OFF;
     }
+    public final void toggleHook() {
+        hookDirection = (hookDirection == TorqueDirection.FORWARD ? TorqueDirection.NEUTRAL : TorqueDirection.FORWARD);
+    }
 
     private Climber() {
         lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
