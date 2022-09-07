@@ -57,7 +57,7 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
 
     private Climber() {
         lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
-        lift.addFollower(Ports.CLIMBER.LIFT.RIGHT);
+        lift.addFollower(Ports.CLIMBER.LIFT.RIGHT, true);
         lift.configurePID(TorquePID.create(.1).build());
 
         hook = new TorqueSparkMax(Ports.CLIMBER.HOOK);
