@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import org.texastorque.subsystems.Drivebase;
 import org.texastorque.subsystems.Shooter;
+import org.texastorque.subsystems.Climber.ClimberState;
 import org.texastorque.subsystems.Intake.IntakeState;
 import org.texastorque.subsystems.Magazine;
 import org.texastorque.subsystems.Shooter.ShooterState;
@@ -47,6 +48,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         updateIntake();
         updateMagazine();
         updateShooter();
+        updateClimber();
     }
 
     private final TorqueTraversableSelection<Double> 
@@ -173,6 +175,12 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         } else {
             shooter.setState(ShooterState.OFF);
         }
+    }
+
+    private final void updateClimber() { 
+        climber.setState(ClimberState.MANUAL);
+        climber.setManualLift(driver.getDPADUp(), driver.getDPADDown());
+        climber.setManualHook(driver.getDPADRight(), driver.getDPADLeft());
     }
 
 
