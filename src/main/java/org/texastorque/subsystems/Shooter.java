@@ -65,8 +65,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     private final TorqueLight camera;
 
-    private final TorqueSparkMax hood;
-    private final TorqueFalcon flywheel;
+    private final TorqueSparkMax hood, flywheel;
 
     private double hoodSetpoint, flywheelSpeed, distance, autoOffset = 0;
 
@@ -76,7 +75,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         // camera = new TorqueLight();
         camera = new TorqueLight("gloworm");
 
-        flywheel = new TorqueFalcon(Ports.SHOOTER.FLYWHEEL.LEFT);
+        flywheel = new TorqueSparkMax(Ports.SHOOTER.FLYWHEEL.LEFT);
         flywheel.addFollower(Ports.SHOOTER.FLYWHEEL.RIGHT, true);
 
         flywheel.configurePID(new KPID(0.5, 5e-05, 0, 0.0603409074, -1, 1, 1000));
@@ -92,10 +91,10 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         //         .addFeedForward(0.08)
         //         .addIntegralZone(1000).build());
                                         
-
-        flywheel.setNeutralMode(NeutralMode.Coast);
-        flywheel.setStatorLimit(new StatorCurrentLimitConfiguration(true, 80, 1, .001));
-        flywheel.setSupplyLimit(new SupplyCurrentLimitConfiguration(true, 80, 1, .001));
+        // Below is Falcon specific
+        // flywheel.setNeutralMode(NeutralMode.Coast);
+        // flywheel.setStatorLimit(new StatorCurrentLimitConfiguration(true, 80, 1, .001));
+        // flywheel.setSupplyLimit(new SupplyCurrentLimitConfiguration(true, 80, 1, .001));
 
         hood = new TorqueSparkMax(Ports.SHOOTER.HOOD);
         // hood.configurePID(new KPID(.1, .001, 0, 0, -.70, .70, .3));

@@ -158,6 +158,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         SmartDashboard.putNumber("IRPM", flywheelRPM.getSpeed());
         SmartDashboard.putNumber("IHOOD", hoodSetpoint.getSpeed());
 
+
         // This is debugging for the regression
         if (operator.getXButton()) {
             shooter.setState(ShooterState.SETPOINT);
