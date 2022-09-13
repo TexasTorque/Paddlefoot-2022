@@ -34,7 +34,7 @@ import org.texastorque.torquelib.util.TorqueUtil;
 public final class Shooter extends TorqueSubsystem implements Subsystems {
     private static volatile Shooter instance;
 
-    public static final double HOOD_MIN = 0, HOOD_MAX = 40, ERROR = 150, FLYWHEEEL_MAX = 3000, FLYWHEEEL_IDLE = 0,
+    public static final double HOOD_MIN = 0, HOOD_MAX = 40, ERROR = 150, FLYWHEEEL_MAX = 3000, FLYWHEEEL_IDLE = .1,
                                FLYWHEEEL_REDUCTION = 5 / 3., CAMERA_HEIGHT = Units.inchesToMeters(33),
             TARGET_HEIGHT = 2.6416;
 
@@ -65,20 +65,23 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     private final TorqueLight camera;
 
-    private final TorqueSparkMax hood, flywheel;
+    private final TorqueSparkMax hood, flywheelLeft, flywheelRight;
 
     private double hoodSetpoint, flywheelSpeed, distance, autoOffset = 0;
 
+    private final TorquePID shootPID = TorquePID.create(.1).build();
     private ShooterState state = ShooterState.OFF;
 
     private Shooter() {
         // camera = new TorqueLight();
         camera = new TorqueLight("gloworm");
 
-        flywheel = new TorqueSparkMax(Ports.SHOOTER.FLYWHEEL.LEFT);
-        flywheel.addFollower(Ports.SHOOTER.FLYWHEEL.RIGHT, true);
+        flywheelLeft = new TorqueSparkMax(Ports.SHOOTER.FLYWHEEL.LEFT);
+        flywheelRight = new TorqueSparkMax(Ports.SHOOTER.FLYWHEEL.RIGHT);
 
-        flywheel.configurePID(new KPID(0.5, 5e-05, 0, 0.0603409074, -1, 1, 1000));
+        // flywheelLeft.configurePID(TorquePID.create(1).build());
+        // flywheelRight.configurePID(TorquePID.create(1).build());
+        // flywheel.configurePID(new KPID(0.5, 5e-05, 0, 0.0603409074, -1, 1, 1000));
         // flywheel.configurePID(new KPID(0.0999999046, 0, 0,  0.0603409074, -1, 1, 1000));
 
         // flywheel.configurePID(TorquePID.create(0.0999999046)
@@ -142,19 +145,25 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
             // LMFAO
         } else {
             flywheelSpeed = 0;
-            flywheel.setPercent(FLYWHEEEL_IDLE);
+            flywheelLeft.setPercent(FLYWHEEEL_IDLE);
+            flywheelRight.setPercent(-FLYWHEEEL_IDLE);
         }
 
-        if (state != ShooterState.OFF) { flywheel.setVelocityRPM(clampRPM(flywheelSpeed)); }
+        if (state != ShooterState.OFF) { 
+            // flywheelLeft.setVelocityRPM(clampRPM(flywheelSpeed)); 
+            // flywheelRight.setVelocityRPM(clampRPM(flywheelSpeed)); 
+            flywheelLeft.setPercent(shootPID.calculate(flywheelSpeed, flywheelLeft.getVelocityRPM()));
+            flywheelRight.setPercent(-shootPID.calculate(flywheelSpeed, flywheelLeft.getVelocityRPM()));
+        }
         hood.setPosition(clampHood(hoodSetpoint));
 
         TorqueSubsystemState.logState(state);
 
-        SmartDashboard.putNumber("Flywheel Real", flywheel.getVelocityRPM());
+        SmartDashboard.putNumber("Flywheel Real", flywheelLeft.getVelocityRPM());
         SmartDashboard.putNumber("Flywheel Req", flywheelSpeed);
         SmartDashboard.putNumber("IDIST", getDistance());
 
-        SmartDashboard.putNumber("Flywheel Delta", flywheelSpeed - flywheel.getVelocityRPM());
+        SmartDashboard.putNumber("Flywheel Delta", flywheelSpeed - flywheelLeft.getVelocityRPM());
         SmartDashboard.putBoolean("Is Shooting", isShooting());
         SmartDashboard.putBoolean("Is Ready", isReady());
     }
@@ -162,7 +171,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     public final boolean isShooting() { return state.isShooting(); }
 
     public final boolean isReady() {
-        return isShooting() && Math.abs(flywheelSpeed - flywheel.getVelocityRPM()) < ERROR;
+        return isShooting() && Math.abs(flywheelSpeed - flywheelLeft.getVelocityRPM()) < ERROR;
     }
 
     /**
