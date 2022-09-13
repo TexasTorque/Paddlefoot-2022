@@ -26,7 +26,7 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
     private final TorqueSparkMax lift1, lift2; 
     private final TorqueSparkMax hook; 
 
-    private ClimberState state = ClimberState.MANUAL;
+    private ClimberState state = ClimberState.OFF;
 
     private boolean clamped = false;
 
@@ -93,8 +93,8 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Hook Dir", hookDirection.toString());
 
         if (state == ClimberState.MANUAL) {
-            lift1.setPercent(liftDirection.get() * LIFT_MULTIPLIER);
-            lift2.setPercent(liftDirection.get() * LIFT_MULTIPLIER);
+             lift1.setPercent(liftDirection.get() * LIFT_MULTIPLIER);
+            lift2.setPercent(-liftDirection.get() * LIFT_MULTIPLIER);
             hook.setPercent(hookDirection.get() * HOOK_MULTIPLIER);
         } else {
             lift1.setPercent(0);

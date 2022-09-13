@@ -148,7 +148,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
 
-    private final TorqueTraversableRange flywheelRPM = new TorqueTraversableRange(1000, 1000, 3000, 100);
+    private final TorqueTraversableRange flywheelRPM = new TorqueTraversableRange(1000, 700, 3000, 100);
     private final TorqueTraversableRange hoodSetpoint = new TorqueTraversableRange(Shooter.HOOD_MIN, Shooter.HOOD_MIN, Shooter.HOOD_MAX, 5);
 
     private final void updateShooter() {
@@ -159,7 +159,9 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         SmartDashboard.putNumber("IHOOD", hoodSetpoint.getSpeed());
 
 
-        // This is debugging for the regression
+        // This is debugging for the regression\[]
+        
+        
         if (operator.getXButton()) {
             shooter.setState(ShooterState.SETPOINT);
             shooter.setFlywheelSpeed(flywheelRPM.getSpeed());
@@ -178,7 +180,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         }
     }
 
-    private final void updateClimber() { 
+    private final void updateClimber() {
         climber.setState(ClimberState.MANUAL);
         climber.setManualLift(driver.getDPADUp(), driver.getDPADDown());
         climber.setManualHook(driver.getDPADRight(), driver.getDPADLeft());

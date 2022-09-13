@@ -72,6 +72,17 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     private final TorquePID shootPID = TorquePID.create(.1).build();
     private ShooterState state = ShooterState.OFF;
 
+        public static final double FLYWHEEL_Ks = 0.37717;
+    public static final double FLYWHEEL_Kv = 0.19542; // Values are for rotations/sec
+    public static final double FLYWHEEL_Ka = 0.016159;
+    public static final double FLYWHEEL_Kp = 0.0003800000122282654;
+    public static final double FLYWHEEL_Ki = 0;
+    public static final double FLYWHEEL_Kd = 0;
+    public static final double FLYWHEEL_Kf = 0.000271599992320872843;
+    public static final double FLYWHEEL_Iz = 150;
+    public static final double FLYWHEEEL_MAX_SPEED = 3000;
+    public static final double FLYWHEEL_MAX_ACCELERATION = 10000;
+
     private Shooter() {
         // camera = new TorqueLight();
         camera = new TorqueLight("gloworm");
@@ -93,7 +104,21 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         //         // .addFeedForward(0.0603409074)
         //         .addFeedForward(0.08)
         //         .addIntegralZone(1000).build());
-                                        
+        
+
+        flywheelLeft.configurePID(
+                new KPID(FLYWHEEL_Kp, FLYWHEEL_Ki,
+                        FLYWHEEL_Kd, FLYWHEEL_Kf, -.1, 1));
+        flywheelLeft.configureIZone(FLYWHEEL_Iz);
+        flywheelLeft.configureSmartMotion(5000, 0, 6000,
+                5, 0);
+                                   
+                flywheelRight.configurePID(
+                new KPID(FLYWHEEL_Kp, FLYWHEEL_Ki,
+                        FLYWHEEL_Kd, FLYWHEEL_Kf, -.1, 1));
+        flywheelRight.configureIZone(FLYWHEEL_Iz);
+        flywheelRight.configureSmartMotion(5000, 0, 6000,
+                5, 0);
         // Below is Falcon specific
         // flywheel.setNeutralMode(NeutralMode.Coast);
         // flywheel.setStatorLimit(new StatorCurrentLimitConfiguration(true, 80, 1, .001));
@@ -143,6 +168,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
             hoodSetpoint = regressionHood(distance);
         } else if (state == ShooterState.SETPOINT || state == ShooterState.WARMUP) {
             // LMFAO
+
         } else {
             flywheelSpeed = 0;
             flywheelLeft.setPercent(FLYWHEEEL_IDLE);
@@ -150,10 +176,10 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         }
 
         if (state != ShooterState.OFF) { 
-            // flywheelLeft.setVelocityRPM(clampRPM(flywheelSpeed)); 
-            // flywheelRight.setVelocityRPM(clampRPM(flywheelSpeed)); 
-            flywheelLeft.setPercent(shootPID.calculate(flywheelSpeed, flywheelLeft.getVelocityRPM()));
-            flywheelRight.setPercent(-shootPID.calculate(flywheelSpeed, flywheelLeft.getVelocityRPM()));
+            //flywheelLeft.setPercent(flywheelSpeed); 
+            //flywheelRight.setPercent(-flywheelSpeed); 
+            flywheelLeft.setPercent(shootPID.calculate(-flywheelSpeed, flywheelLeft.getVelocityRPM()));
+            flywheelRight.setPercent(shootPID.calculate(flywheelSpeed, flywheelLeft.getVelocityRPM()));
         }
         hood.setPosition(clampHood(hoodSetpoint));
 
@@ -174,7 +200,10 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         return isShooting() && Math.abs(flywheelSpeed - flywheelLeft.getVelocityRPM()) < ERROR;
     }
 
-    /**
+    /**\[]
+     * [\]
+     * \[]
+     * 
      * @param distance Distance (m)
      * @return RPM the shooter should go at
      */
