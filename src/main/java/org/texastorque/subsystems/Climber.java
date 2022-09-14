@@ -62,7 +62,6 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
     private Climber() {
         lift1 = new TorqueSparkMax(Ports.CLIMBER.LIFT.RIGHT);
         lift2 = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
-        // lift.addFollower(Ports.CLIMBER.LIFT.LEFT, false);
 
         // lift.configurePID(TorquePID.create(.1).build());
 
@@ -78,7 +77,8 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
     }
 
     public final void stop() {
-        // lift.setPercent(0);
+        lift1.setPercent(0);
+        lift2.setPercent(0);
         if (!clamped)
             hook.setPercent(0);
     }
