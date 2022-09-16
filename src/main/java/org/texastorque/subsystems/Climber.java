@@ -14,17 +14,17 @@ import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
 
-
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class Climber extends TorqueSubsystem implements Subsystems {
     private static volatile Climber instance;
 
-    public static double LIFT_UP = .1477, HOOK_OPEN = .1477, LIFT_BOTTOM = .1477, LIFT_MULTIPLIER = 1, HOOK_MULTIPLIER = 1; 
+    public static double LIFT_UP = .1477, HOOK_OPEN = .1477, LIFT_BOTTOM = .1477, LIFT_MULTIPLIER = .4,
+            HOOK_MULTIPLIER = 1;
     // TODO(@Juicestus <jus@justusl.com>): FILL THESE
 
-    private final TorqueSparkMax lift1, lift2; 
-    private final TorqueSparkMax hook; 
+    private final TorqueSparkMax lift1, lift2;
+    private final TorqueSparkMax hook;
 
     private ClimberState state = ClimberState.OFF;
 
@@ -34,10 +34,11 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         MANUAL, READY, PULL, OFF;
     }
 
-    public void setState(final ClimberState state) { 
+    public void setState(final ClimberState state) {
         this.state = state;
-    
+
     }
+
     private TorqueDirection liftDirection = TorqueDirection.OFF;
     private TorqueDirection hookDirection = TorqueDirection.OFF;
 
@@ -93,7 +94,7 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Hook Dir", hookDirection.toString());
 
         if (state == ClimberState.MANUAL) {
-             lift1.setPercent(liftDirection.get() * LIFT_MULTIPLIER);
+            lift1.setPercent(liftDirection.get() * LIFT_MULTIPLIER);
             lift2.setPercent(-liftDirection.get() * LIFT_MULTIPLIER);
             hook.setPercent(hookDirection.get() * HOOK_MULTIPLIER);
         } else {
@@ -112,10 +113,6 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         //     hook.setPercent(hookDirection.get());
         //     return;
         // }
-
-
-
-
 
         // if (state == ClimberState.READY) {
         //     lift.setPosition(LIFT_UP);
@@ -140,7 +137,9 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         this.clamped = clamped;
     }
 
-    public final boolean hasStarted() { return false; }
+    public final boolean hasStarted() {
+        return false;
+    }
 
     public static final synchronized Climber getInstance() {
         return instance == null ? instance = new Climber() : instance;

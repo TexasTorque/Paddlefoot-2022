@@ -46,7 +46,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
     private final TorqueTraversableSelection<Double>
     // translationalSpeeds = new TorqueTraversableSelection<Double>(1, .35, .45, .55),
-    translationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .6, .7),
+    //translationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .6, .7),
             rotationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .75, 1.);
 
     // Incredibly basic solution for inverting the driver controls after an auto routine.
@@ -124,7 +124,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         // magazine.setState(BeltDirection.OFF, GateDirection.OFF); 
     }
 
-    // private final void updateManualMagazineBeltControls(final TorqueController controller) {
     private final void updateManualMagazineBeltControls(final GenericController controller) {
         if (controller.getRightBumper())
             magazine.setBeltDirection(Magazine.MAG_UP);
@@ -134,7 +133,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             magazine.setBeltDirection(TorqueDirection.OFF);
     }
 
-    // private final void updateManualMagazineGateControls(final TorqueController controller) {
     private final void updateManualMagazineGateControls(final GenericController controller) {
         if (controller.getLeftBumper())
             magazine.setGateDirection(TorqueDirection.FORWARD);
@@ -144,7 +142,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             magazine.setGateDirection(TorqueDirection.OFF);
     }
 
-    private final TorqueTraversableRange flywheelRPM = new TorqueTraversableRange(1000, 700, 3000, 100);
+    private final TorqueTraversableRange flywheelRPM = new TorqueTraversableRange(1000, 700, 4000, 100);
     private final TorqueTraversableRange hoodSetpoint = new TorqueTraversableRange(Shooter.HOOD_MIN, Shooter.HOOD_MIN,
             Shooter.HOOD_MAX, 5);
 
@@ -161,10 +159,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             shooter.setState(ShooterState.SETPOINT);
             shooter.setFlywheelSpeed(flywheelRPM.getSpeed());
             shooter.setHoodPosition(hoodSetpoint.getSpeed());
-            // turret.setState(TurretState.CENTER);
-        }
-
-        if (driver.getLeftTrigger()) {
+        } else if (driver.getLeftTrigger()) {
             shooter.setState(ShooterState.REGRESSION);
         } else if (driver.getXButton()) {
             shooter.setState(ShooterState.SETPOINT);

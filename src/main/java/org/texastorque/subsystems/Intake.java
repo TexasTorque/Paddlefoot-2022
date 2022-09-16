@@ -14,7 +14,6 @@ import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.base.TorqueSubsystemState;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
-import org.texastorque.torquelib.util.KPID;
 
 /**
  * The intake subsystem.
@@ -26,7 +25,7 @@ public final class Intake extends TorqueSubsystem implements Subsystems {
     private static volatile Intake instance;
 
     private static final double ROTARY_UP_POSITION = 0, ROTARY_DOWN_POSITION = -5.64, ROTARY_MIN_SPEED = -.35,
-                                ROTARY_MAX_SPEED = .35, ROLLER_MAX_SPEED = 1;
+            ROTARY_MAX_SPEED = .35, ROLLER_MAX_SPEED = 1;
 
     public enum IntakeState implements TorqueSubsystemState {
         INTAKE(-ROLLER_MAX_SPEED, ROTARY_DOWN_POSITION),
@@ -40,8 +39,13 @@ public final class Intake extends TorqueSubsystem implements Subsystems {
             this.position = position;
         }
 
-        public final double getDirection() { return direction; }
-        public final double getPosition() { return position; }
+        public final double getDirection() {
+            return direction;
+        }
+
+        public final double getPosition() {
+            return position;
+        }
 
         @Override
         public final String toString() {
@@ -56,21 +60,27 @@ public final class Intake extends TorqueSubsystem implements Subsystems {
     private Intake() {
         rotary = new TorqueSparkMax(Ports.INTAKE.ROTARY);
 
-        // rotary.configurePID(new KPID(0.1, 0, 0, 0, ROTARY_MIN_SPEED, ROTARY_MAX_SPEED));
         rotary.configurePID(TorquePID.create(.1).addOutputRange(ROTARY_MIN_SPEED, ROTARY_MAX_SPEED).build());
 
         rollers = new TorqueSparkMax(Ports.INTAKE.ROLLER);
-        // rollers.configurePID(new KPID(1, 0, 0, 0, -1, 1));
         rollers.configurePID(TorquePID.create().build());
     }
 
-    public final void setState(final IntakeState state) { this.state = state; }
+    public final void setState(final IntakeState state) {
+        this.state = state;
+    }
 
-    public final boolean isIntaking() { return state == IntakeState.INTAKE; }
-    public final boolean isOutaking() { return state == IntakeState.OUTAKE; }
+    public final boolean isIntaking() {
+        return state == IntakeState.INTAKE;
+    }
+
+    public final boolean isOutaking() {
+        return state == IntakeState.OUTAKE;
+    }
 
     @Override
-    public final void initialize(final TorqueMode mode) {}
+    public final void initialize(final TorqueMode mode) {
+    }
 
     @Override
     public final void update(final TorqueMode mode) {
