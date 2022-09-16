@@ -1,8 +1,6 @@
-# Clutch-2022
+# Paddlefoot-2022
 
-Codebase for Clutch, our 2022 season robot.
-
-Others may call the robot Nimbus, but in programming, it's called Clutch. End of story.
+Codebase for Paddlefoot, our 2022 offseason robot.
 
 ## New project structure
 
