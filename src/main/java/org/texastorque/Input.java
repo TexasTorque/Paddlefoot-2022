@@ -47,7 +47,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final TorqueTraversableSelection<Double>
     // translationalSpeeds = new TorqueTraversableSelection<Double>(1, .35, .45, .55),
     //translationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .6, .7),
-            rotationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .75, 1.);
+    rotationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .75, 1.);
 
     // Incredibly basic solution for inverting the driver controls after an auto routine.
     private double invertCoefficient = 1;
@@ -163,7 +163,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             shooter.setState(ShooterState.REGRESSION);
         } else if (driver.getXButton()) {
             shooter.setState(ShooterState.SETPOINT);
-            shooter.setFlywheelSpeed(1600);
+            shooter.setFlywheelSpeed(800);
             shooter.setHoodPosition(30);
         } else {
             shooter.setState(ShooterState.OFF);
