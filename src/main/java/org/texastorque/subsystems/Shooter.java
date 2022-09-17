@@ -68,10 +68,9 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     private Shooter() {
         camera = new TorqueLight("gloworm");
 
-        // Flywheel lefto nly object u need, set follower in sparkmax hardware client (:
+        // The right flywheel is set as a follower via Rev Hardware Client
         flywheel = new TorqueSparkMax(Ports.SHOOTER.FLYWHEEL.LEFT);
-        //flywheel.configurePID(TorquePID.create(1).build());
-        flywheel.configurePID(TorquePID.create(.000005).addFeedForward(.00145).build());
+        flywheel.configurePID(TorquePID.create(.000005).addFeedForward(.00145).setTolerance(20).build());
 
         hood = new TorqueSparkMax(Ports.SHOOTER.HOOD);
         hood.configurePID(TorquePID.create(.1)
@@ -126,7 +125,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
             hoodSetpoint = regressionHood(distance);
         } else if (state == ShooterState.WARMUP) {
             flywheel.setPercent(0);
-            //flywheelRight.setPercent(-FLYWHEEEL_IDLE);
         } else if (state == ShooterState.OFF) {
             flywheelSpeed = 0;
             flywheel.setPercent(0);

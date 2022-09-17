@@ -119,24 +119,24 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
     private final void updateMagazine() {
-        updateManualMagazineBeltControls(operator);
-        updateManualMagazineGateControls(operator);
+        updateManualMagazineBeltControls(driver);
+        updateManualMagazineGateControls(driver);
         // magazine.setState(BeltDirection.OFF, GateDirection.OFF); 
     }
 
     private final void updateManualMagazineBeltControls(final GenericController controller) {
-        if (controller.getRightBumper())
+        if (controller.getDPADUp())
             magazine.setBeltDirection(Magazine.MAG_UP);
-        else if (controller.getRightTrigger())
+        else if (controller.getDPADDown())
             magazine.setBeltDirection(Magazine.MAG_DOWN);
         else
             magazine.setBeltDirection(TorqueDirection.OFF);
     }
 
     private final void updateManualMagazineGateControls(final GenericController controller) {
-        if (controller.getLeftBumper())
+        if (controller.getDPADUp())
             magazine.setGateDirection(TorqueDirection.FORWARD);
-        else if (controller.getLeftTrigger())
+        else if (controller.getDPADDown())
             magazine.setGateDirection(TorqueDirection.REVERSE);
         else
             magazine.setGateDirection(TorqueDirection.OFF);
@@ -161,10 +161,14 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             shooter.setHoodPosition(hoodSetpoint.getSpeed());
         } else if (driver.getLeftTrigger()) {
             shooter.setState(ShooterState.REGRESSION);
+        } else if (driver.getYButton()) {
+            shooter.setState(ShooterState.SETPOINT);
+            shooter.setFlywheelSpeed(1400);
+            shooter.setHoodPosition(30);
         } else if (driver.getXButton()) {
             shooter.setState(ShooterState.SETPOINT);
-            shooter.setFlywheelSpeed(800);
-            shooter.setHoodPosition(30);
+            shooter.setFlywheelSpeed(500);
+            shooter.setHoodPosition(25);
         } else {
             shooter.setState(ShooterState.OFF);
         }
@@ -172,8 +176,8 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
     private final void updateClimber() {
         climber.setState(ClimberState.MANUAL);
-        climber.setManualLift(driver.getDPADUp(), driver.getDPADDown());
-        climber.setManualHook(driver.getDPADRight(), driver.getDPADLeft());
+        climber.setManualLift(operator.getDPADUp(), operator.getDPADDown());
+        //climber.setManualHook(operator.getDPADRight(), operator.getDPADLeft());
     }
 
     public static final synchronized Input getInstance() {

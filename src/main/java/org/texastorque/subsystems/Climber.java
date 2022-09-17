@@ -1,9 +1,9 @@
-/**
- * Copyright 2022 Texas Torque.
- * 
- * This file is part of Clutch-2022, which is not licensed for distribution.
- * For more details, see ./license.txt or write <jus@gtsbr.org>.
- */
+/* Copyright 2022 Texas Torque.
+*
+* This file is part of Clutch-2022, which is not licensed for distribution.
+* For more details, see ./license.txt or write <jus@gtsbr.org>.
+*/
+
 package org.texastorque.subsystems;
 
 import org.texastorque.Ports;
@@ -11,7 +11,6 @@ import org.texastorque.Subsystems;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueMode;
 import org.texastorque.torquelib.base.TorqueSubsystem;
-import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -24,11 +23,8 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
     // TODO(@Juicestus <jus@justusl.com>): FILL THESE
 
     private final TorqueSparkMax lift1, lift2;
-    private final TorqueSparkMax hook;
 
     private ClimberState state = ClimberState.OFF;
-
-    private boolean clamped = false;
 
     public enum ClimberState {
         MANUAL, READY, PULL, OFF;
@@ -65,23 +61,18 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         lift2 = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
 
         // lift.configurePID(TorquePID.create(.1).build());
-
-        hook = new TorqueSparkMax(Ports.CLIMBER.HOOK);
-        hook.configurePID(TorquePID.create(.1).build());
     }
 
     @Override
     public final void initialize(final TorqueMode mode) {
         state = ClimberState.MANUAL;
-        clamped = false;
         // stop();
     }
 
     public final void stop() {
         lift1.setPercent(0);
         lift2.setPercent(0);
-        if (!clamped)
-            hook.setPercent(0);
+
     }
 
     @Override
@@ -89,14 +80,12 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
 
         SmartDashboard.putNumber("Climber Lift 1", lift1.getPosition());
         SmartDashboard.putNumber("Climber Lift 2", lift2.getPosition());
-        SmartDashboard.putNumber("Climber Hook", hook.getPosition());
         SmartDashboard.putString("Lift Dir", liftDirection.toString());
         SmartDashboard.putString("Hook Dir", hookDirection.toString());
 
         if (state == ClimberState.MANUAL) {
             lift1.setPercent(liftDirection.get() * LIFT_MULTIPLIER);
             lift2.setPercent(-liftDirection.get() * LIFT_MULTIPLIER);
-            hook.setPercent(hookDirection.get() * HOOK_MULTIPLIER);
         } else {
             lift1.setPercent(0);
             lift2.setPercent(0);
@@ -131,10 +120,6 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         //     hook.setVoltage(TorqueDirection.FORWARD.get() * 12);
 
         // }
-    }
-
-    public final void setClamped(final boolean clamped) {
-        this.clamped = clamped;
     }
 
     public final boolean hasStarted() {
