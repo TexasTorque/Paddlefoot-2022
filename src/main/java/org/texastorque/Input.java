@@ -142,7 +142,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             magazine.setGateDirection(TorqueDirection.OFF);
     }
 
-    private final TorqueTraversableRange flywheelRPM = new TorqueTraversableRange(1000, 200, 4000, 100);
+    private final TorqueTraversableRange flywheelRPM = new TorqueTraversableRange(1000, 200, 4000, 50);
     private final TorqueTraversableRange hoodSetpoint = new TorqueTraversableRange(Shooter.HOOD_MIN, Shooter.HOOD_MIN,
             Shooter.HOOD_MAX, 5);
 
@@ -177,6 +177,9 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final void updateClimber() {
         climber.setState(ClimberState.MANUAL);
         climber.setManualLift(operator.getDPADUp(), operator.getDPADDown());
+        if (operator.getRightTrigger()) climber.setState(ClimberState.EXTEND);
+        else if (operator.getLeftTrigger()) climber.setState(ClimberState.RETRACT);
+        else climber.setState(ClimberState.OFF);
         //climber.setManualHook(operator.getDPADRight(), operator.getDPADLeft());
     }
 

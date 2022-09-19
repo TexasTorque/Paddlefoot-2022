@@ -17,7 +17,10 @@ import org.texastorque.Subsystems;
 import org.texastorque.torquelib.base.TorqueMode;
 import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.base.TorqueSubsystemState;
+import org.texastorque.torquelib.control.TorqueDisjointDataRegression;
+import org.texastorque.torquelib.control.TorqueDisjointDataRegression.DisjointData;
 import org.texastorque.torquelib.control.TorquePID;
+import org.texastorque.torquelib.control.TorqueRollingMedian;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
 import org.texastorque.torquelib.sensors.TorqueLight;
 import org.texastorque.torquelib.util.TorqueMath;
@@ -26,7 +29,7 @@ import org.texastorque.torquelib.util.TorqueUtil;
 public final class Shooter extends TorqueSubsystem implements Subsystems {
     private static volatile Shooter instance;
 
-    public static final double HOOD_MIN = 0, HOOD_MAX = 40, ERROR = 150, FLYWHEEEL_MAX = 3000, FLYWHEEEL_IDLE = .1,
+    public static final double HOOD_MIN = 0, HOOD_MAX = 40, ERROR = 50, FLYWHEEEL_MAX = 3000, FLYWHEEEL_IDLE = .1,
             FLYWHEEEL_REDUCTION = 5 / 3., CAMERA_HEIGHT = Units.inchesToMeters(33),
             TARGET_HEIGHT = 2.6416;
 
@@ -42,6 +45,9 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
             HUB_CENTER_POSITION.getY(), new Rotation2d());
 
     public static final Translation2d CAMERA_TO_ROBOT = new Translation2d(Units.inchesToMeters(2), CAMERA_HEIGHT);
+
+    public static TorqueDisjointDataRegression disjointData;
+    public static TorqueRollingMedian rollingMedian = new TorqueRollingMedian(10);
 
     //private static final Transform2d TRANSFORM_ADJUSTMENT = new Transform2d(new Translation2d(.9, 0), new Rotation2d());
 
@@ -81,6 +87,17 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
         hood.configurePositionalCANFrame();
         hood.burnFlash();
+
+        disjointData = new TorqueDisjointDataRegression();
+        disjointData.addDisjointData(disjointData.new DisjointData(4, 20, 1800));
+        disjointData.addDisjointData(disjointData.new DisjointData(5, 25, 2000));
+        disjointData.addDisjointData(disjointData.new DisjointData(4.7, 25, 2000));
+        disjointData.addDisjointData(disjointData.new DisjointData(3.6, 25, 1700));
+        disjointData.addDisjointData(disjointData.new DisjointData(2.7, 20, 1700));
+        disjointData.addDisjointData(disjointData.new DisjointData(3.8, 25, 1750));
+        disjointData.addDisjointData(disjointData.new DisjointData(6.4, 35, 2500));
+        disjointData.addDisjointData(disjointData.new DisjointData(5.4, 35, 2350));
+        disjointData.addDisjointData(disjointData.new DisjointData(4.4, 30, 2000));
     }
 
     public final void setState(final ShooterState state) {
@@ -119,12 +136,14 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
             hoodSetpoint = HOOD_MIN;
         } else if (state == ShooterState.REGRESSION) {
             distance = getDistance();
-            flywheelSpeed = regressionRPM(distance) + (mode.isAuto() ? autoOffset : 0);
-            hoodSetpoint = regressionHood(distance);
+            DisjointData data = disjointData.calculate(distance);
+            flywheelSpeed = data.getRpm() + (mode.isAuto() ? autoOffset : 0);
+            hoodSetpoint = data.getHood();
         } else if (state == ShooterState.DISTANCE) {
             distance = getDistance();
-            flywheelSpeed = regressionRPM(distance);
-            hoodSetpoint = regressionHood(distance);
+            DisjointData data = disjointData.calculate(distance);
+            flywheelSpeed = data.getRpm();
+            hoodSetpoint = data.getHood();
         } else if (state == ShooterState.WARMUP) {
             flywheel.setPercent(0);
         } else if (state == ShooterState.OFF) {
@@ -148,7 +167,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putBoolean("Is Shooting", isShooting());
         SmartDashboard.putBoolean("Is Ready", isReady());
         SmartDashboard.putNumber("Fly Wheel Current", flywheel.getCurrent());
-        //SmartDashboard.putNumber("Fly Wheel Pos", flywheel.getPositionDegrees());
         SmartDashboard.putNumber("Real RPM", realVelocityRPM);
     }
 
@@ -160,27 +178,27 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         return isShooting() && Math.abs(flywheelSpeed - realVelocityRPM) < ERROR;
     }
 
-    /**
-     * 
-     * @param distance Distance (m)
-     * @return RPM the shooter should go at
-     */
-    private final double regressionRPM(final double distance) {
-        // return clampRPM(26.83 * distance * 24 + 1350); 
-        // return clampRPM(285.7 * distance + 893); 
-        return clampRPM(500 * distance + 300);
-    }
+    // /**
+    //  * 
+    //  * @param distance Distance (m)
+    //  * @return RPM the shooter should go at
+    //  */
+    // private final double regressionRPM(final double distance) {
+    //     if (distance < 3)
+    //         return clampRPM(distance * 250 + 900);
+    //     else
+    //         return clampRPM(-1009 * Math.exp(-Math.pow((distance - 3.088), 2) / Math.pow(2.485, 2)) + 2683);
 
-    /**
-     * @param distance Distance (m)
-     * @return Hood the shooter should go at
-     */
-    private final double regressionHood(final double distance) {
-        // if (distance > 3.5) return HOOD_MAX;
-        // return clampHood(1.84 * distance * 24 + 19.29 - 5);
-        // return clampHood(14.29 * distance - 3);
-        return clampRPM(10 * distance);
-    }
+    // }
+
+    // /**
+    //  * @param distance Distance (m)
+    //  * @return Hood the shooter should go at
+    //  */
+    // private final double regressionHood(final double distance) {
+
+    //     return clampHood();
+    // }
 
     private final double clampRPM(final double rpm) {
         return TorqueMath.constrain(rpm, FLYWHEEEL_IDLE, FLYWHEEEL_MAX);
@@ -199,7 +217,8 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     }
 
     public final double getDistance() {
-        return TorqueLight.getDistanceToElevatedTarget(camera, CAMERA_HEIGHT, TARGET_HEIGHT, CAMERA_ANGLE);
+        return rollingMedian
+                .calculate(TorqueLight.getDistanceToElevatedTarget(camera, CAMERA_HEIGHT, TARGET_HEIGHT, CAMERA_ANGLE));
     }
 
     public final Pose2d getVisionPositionEstimate() {
