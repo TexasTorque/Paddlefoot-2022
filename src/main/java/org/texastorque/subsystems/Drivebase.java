@@ -128,15 +128,15 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                     speeds.vyMetersPerSecond * translatingSpeed, speeds.omegaRadiansPerSecond * rotaitonalSpeed,
                     gyro.getRotation2dClockwise());
 
-        if (shooter.isShooting() && shouldTarget) {
-            SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
-            final double offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5) * 1.;
-            final double yaw = shooter.getTargetOffset();
-            SmartDashboard.putNumber("Targeting Yaw", yaw);
-            final double output = -targetPID.calculate(-yaw, offset);
-            SmartDashboard.putNumber("Locking PID output", output);
-            speeds.omegaRadiansPerSecond = output;
-        }
+        // if (shooter.isShooting() && shouldTarget) {
+        //     SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
+        //     final double offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5) * 1.;
+        //     final double yaw = shooter.getTargetOffset();
+        //     SmartDashboard.putNumber("Targeting Yaw", yaw);
+        //     final double output = -targetPID.calculate(-yaw, offset);
+        //     SmartDashboard.putNumber("Locking PID output", output);
+        //     speeds.omegaRadiansPerSecond = output;
+        // }
 
         swerveModuleStates = kinematics.toSwerveModuleStates(speeds);
 

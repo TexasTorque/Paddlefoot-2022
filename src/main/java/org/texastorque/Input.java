@@ -180,7 +180,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         if (operator.getRightTrigger()) climber.setState(ClimberState.EXTEND);
         else if (operator.getLeftTrigger()) climber.setState(ClimberState.RETRACT);
         else climber.setState(ClimberState.OFF);
-        //climber.setManualHook(operator.getDPADRight(), operator.getDPADLeft());
+
     }
 
     public static final synchronized Input getInstance() {

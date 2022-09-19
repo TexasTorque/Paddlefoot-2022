@@ -71,6 +71,10 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
 
         if (state == ClimberState.MANUAL) {
             lift.setPercent(liftDirection.get() * LIFT_MULTIPLIER);
+        } else if (state == ClimberState.RETRACT) {
+            lift.setPosition(LIFT_BOTTOM);
+        } else if (state == ClimberState.EXTEND) {
+            lift.setPosition(LIFT_UP);
         } else {
             lift.setPercent(0);
             // hook.setPercent(0);
