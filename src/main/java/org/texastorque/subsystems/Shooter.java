@@ -61,7 +61,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     private final TorqueSparkMax hood, flywheel;
 
-    private double hoodSetpoint, flywheelSpeed, distance, autoOffset = 0;
+    private double hoodSetpoint, flywheelSpeed, distance, autoOffset = 0, realVelocityRPM;
 
     private ShooterState state = ShooterState.OFF;
 
@@ -70,7 +70,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
         // The right flywheel is set as a follower via Rev Hardware Client
         flywheel = new TorqueSparkMax(Ports.SHOOTER.FLYWHEEL.LEFT);
-        flywheel.configurePID(TorquePID.create(.000005).addFeedForward(.00145).setTolerance(20).build());
+        flywheel.configurePID(TorquePID.create(.000005).addFeedForward(.0003725).setTolerance(20).build());
 
         hood = new TorqueSparkMax(Ports.SHOOTER.HOOD);
         hood.configurePID(TorquePID.create(.1)
@@ -110,6 +110,8 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
+        realVelocityRPM = flywheel.getVelocityRPM() / FLYWHEEEL_REDUCTION;
+
         camera.update();
 
         if (climber.hasStarted()) {
@@ -146,6 +148,8 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putBoolean("Is Shooting", isShooting());
         SmartDashboard.putBoolean("Is Ready", isReady());
         SmartDashboard.putNumber("Fly Wheel Current", flywheel.getCurrent());
+        //SmartDashboard.putNumber("Fly Wheel Pos", flywheel.getPositionDegrees());
+        SmartDashboard.putNumber("Real RPM", realVelocityRPM);
     }
 
     public final boolean isShooting() {
@@ -153,7 +157,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     }
 
     public final boolean isReady() {
-        return isShooting() && Math.abs(flywheelSpeed - flywheel.getVelocityRPM()) < ERROR;
+        return isShooting() && Math.abs(flywheelSpeed - realVelocityRPM) < ERROR;
     }
 
     /**

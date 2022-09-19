@@ -142,13 +142,13 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             magazine.setGateDirection(TorqueDirection.OFF);
     }
 
-    private final TorqueTraversableRange flywheelRPM = new TorqueTraversableRange(1000, 700, 4000, 100);
+    private final TorqueTraversableRange flywheelRPM = new TorqueTraversableRange(1000, 200, 4000, 100);
     private final TorqueTraversableRange hoodSetpoint = new TorqueTraversableRange(Shooter.HOOD_MIN, Shooter.HOOD_MIN,
             Shooter.HOOD_MAX, 5);
 
     private final void updateShooter() {
         flywheelRPM.update(operator.getDPADRight(), operator.getDPADLeft(), false, false);
-        hoodSetpoint.update(operator.getDPADUp(), operator.getDPADDown(), false, false);
+        hoodSetpoint.update(operator.getYButton(), operator.getAButton(), false, false);
 
         SmartDashboard.putNumber("IRPM", flywheelRPM.getSpeed());
         SmartDashboard.putNumber("IHOOD", hoodSetpoint.getSpeed());
@@ -163,12 +163,12 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             shooter.setState(ShooterState.REGRESSION);
         } else if (driver.getYButton()) {
             shooter.setState(ShooterState.SETPOINT);
-            shooter.setFlywheelSpeed(1400);
+            shooter.setFlywheelSpeed(1500);
             shooter.setHoodPosition(30);
         } else if (driver.getXButton()) {
             shooter.setState(ShooterState.SETPOINT);
-            shooter.setFlywheelSpeed(500);
-            shooter.setHoodPosition(25);
+            shooter.setFlywheelSpeed(400);
+            shooter.setHoodPosition(20);
         } else {
             shooter.setState(ShooterState.OFF);
         }

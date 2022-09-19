@@ -49,7 +49,7 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
 
     private boolean shootingStarted = false;
     private double shootingStartedTime = 0;
-    private final double DROP_TIME = .05; // TODO: Update this value
+    private final double DROP_TIME = .05;
 
     private TorquePersistentBoolean ready = new TorquePersistentBoolean(5), locked = new TorquePersistentBoolean(5);
 
