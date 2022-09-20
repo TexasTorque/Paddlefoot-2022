@@ -49,8 +49,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     public static TorqueDisjointDataRegression disjointData;
     public static TorqueRollingMedian rollingMedian = new TorqueRollingMedian(10);
 
-    //private static final Transform2d TRANSFORM_ADJUSTMENT = new Transform2d(new Translation2d(.9, 0), new Rotation2d());
-
     public enum ShooterState implements TorqueSubsystemState {
         OFF,
         REGRESSION,
@@ -137,12 +135,12 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         } else if (state == ShooterState.REGRESSION) {
             distance = getDistance();
             DisjointData data = disjointData.calculate(distance);
-            flywheelSpeed = data.getRpm() + (mode.isAuto() ? autoOffset : 0);
+            flywheelSpeed = data.getRPM() + (mode.isAuto() ? autoOffset : 0);
             hoodSetpoint = data.getHood();
         } else if (state == ShooterState.DISTANCE) {
             distance = getDistance();
             DisjointData data = disjointData.calculate(distance);
-            flywheelSpeed = data.getRpm();
+            flywheelSpeed = data.getRPM();
             hoodSetpoint = data.getHood();
         } else if (state == ShooterState.WARMUP) {
             flywheel.setPercent(0);
@@ -152,7 +150,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         }
 
         if (state != ShooterState.OFF) {
-            flywheel.setVelocityRPM(flywheelSpeed);
+            flywheel.setVelocityRPM(clampRPM(flywheelSpeed));
         }
 
         hood.setPosition(clampHood(hoodSetpoint));
@@ -177,28 +175,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     public final boolean isReady() {
         return isShooting() && Math.abs(flywheelSpeed - realVelocityRPM) < ERROR;
     }
-
-    // /**
-    //  * 
-    //  * @param distance Distance (m)
-    //  * @return RPM the shooter should go at
-    //  */
-    // private final double regressionRPM(final double distance) {
-    //     if (distance < 3)
-    //         return clampRPM(distance * 250 + 900);
-    //     else
-    //         return clampRPM(-1009 * Math.exp(-Math.pow((distance - 3.088), 2) / Math.pow(2.485, 2)) + 2683);
-
-    // }
-
-    // /**
-    //  * @param distance Distance (m)
-    //  * @return Hood the shooter should go at
-    //  */
-    // private final double regressionHood(final double distance) {
-
-    //     return clampHood();
-    // }
 
     private final double clampRPM(final double rpm) {
         return TorqueMath.constrain(rpm, FLYWHEEEL_IDLE, FLYWHEEEL_MAX);

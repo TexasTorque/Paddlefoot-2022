@@ -29,8 +29,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private static volatile Input instance;
 
     private Input() {
-        // driver = new TorqueController(ControllerPort.DRIVER);
-        // operator = new TorqueController(ControllerPort.OPERATOR);
         driver = new GenericController(0, .1);
         operator = new GenericController(1, .1);
     }
@@ -44,10 +42,9 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         updateClimber();
     }
 
-    private final TorqueTraversableSelection<Double>
-    // translationalSpeeds = new TorqueTraversableSelection<Double>(1, .35, .45, .55),
-    //translationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .6, .7),
-    rotationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .75, 1.);
+    private final TorqueTraversableSelection<Double> translationalSpeeds = new TorqueTraversableSelection<Double>(1, .5,
+            .6, .7),
+            rotationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .75, 1.);
 
     // Incredibly basic solution for inverting the driver controls after an auto routine.
     private double invertCoefficient = 1;
@@ -83,8 +80,8 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         SmartDashboard.putNumber("PID O", rotationRequested);
         SmartDashboard.putNumber("Rot Delta", rotationReal - lastRotation);
 
-        // drivebase.setSpeedCoefs(translationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()),
-        // rotationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()));
+        drivebase.setSpeedCoefs(translationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()),
+                rotationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()));
 
         drivebase.setSpeedCoefs(1, 1);
 
@@ -96,10 +93,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             drivebase.setSpeeds(new ChassisSpeeds(0, 0, 0));
             return;
         }
-
-        // final double xVelo = xLimiter.calculate(driver.getLeftYAxis() * invertCoefficient);
-        // final double yVelo = yLimiter.calculate(-driver.getLeftXAxis() * invertCoefficient);
-        // final double rVelo = rotationRequested * invertCoefficient;
 
         final double xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
                 xLimiter::calculate);
@@ -121,7 +114,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final void updateMagazine() {
         updateManualMagazineBeltControls(driver);
         updateManualMagazineGateControls(driver);
-        // magazine.setState(BeltDirection.OFF, GateDirection.OFF); 
     }
 
     private final void updateManualMagazineBeltControls(final GenericController controller) {
@@ -154,7 +146,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         SmartDashboard.putNumber("IHOOD", hoodSetpoint.getSpeed());
 
         // This is debugging for the regression
-
         if (operator.getXButton()) {
             shooter.setState(ShooterState.SETPOINT);
             shooter.setFlywheelSpeed(flywheelRPM.getSpeed());
@@ -177,9 +168,12 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final void updateClimber() {
         climber.setState(ClimberState.MANUAL);
         climber.setManualLift(operator.getDPADUp(), operator.getDPADDown());
-        if (operator.getRightTrigger()) climber.setState(ClimberState.EXTEND);
-        else if (operator.getLeftTrigger()) climber.setState(ClimberState.RETRACT);
-        else climber.setState(ClimberState.OFF);
+        if (operator.getRightTrigger())
+            climber.setState(ClimberState.EXTEND);
+        else if (operator.getLeftTrigger())
+            climber.setState(ClimberState.RETRACT);
+        else
+            climber.setState(ClimberState.OFF);
 
     }
 

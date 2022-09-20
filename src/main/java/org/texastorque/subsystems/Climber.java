@@ -13,15 +13,17 @@ import org.texastorque.torquelib.base.TorqueMode;
 import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
+import org.texastorque.torquelib.util.TorqueMath;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class Climber extends TorqueSubsystem implements Subsystems {
     private static volatile Climber instance;
 
-    public static double LIFT_UP = .1477, HOOK_OPEN = .1477, LIFT_BOTTOM = .1477, LIFT_MULTIPLIER = 1;
+    public static double LIFT_UP = .1477, HOOK_OPEN = .1477, LIFT_BOTTOM = .1477;
     // TODO(@Juicestus <jus@justusl.com>): FILL THESE
 
+    // The right climber is set as a follower via Rev Hardware Client
     private final TorqueSparkMax lift;
 
     private ClimberState state = ClimberState.OFF;
@@ -48,19 +50,16 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
 
     private Climber() {
         lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
-
         lift.configurePID(TorquePID.create(.007).build());
     }
 
     @Override
     public final void initialize(final TorqueMode mode) {
         state = ClimberState.MANUAL;
-        // stop();
     }
 
     public final void stop() {
         lift.setPercent(0);
-
     }
 
     @Override
@@ -70,44 +69,15 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Lift Dir", liftDirection.toString());
 
         if (state == ClimberState.MANUAL) {
-            lift.setPercent(liftDirection.get() * LIFT_MULTIPLIER);
+            lift.setPercent(TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
         } else if (state == ClimberState.RETRACT) {
             lift.setPosition(LIFT_BOTTOM);
         } else if (state == ClimberState.EXTEND) {
             lift.setPosition(LIFT_UP);
         } else {
             lift.setPercent(0);
-            // hook.setPercent(0);
         }
 
-        // if (!mode.isTeleop()) {
-        //     stop();
-        //     return;
-        // }
-
-        // if (state == ClimberState.MANUAL) {
-        //     lift.setPercent(liftDirection.get());
-        //     hook.setPercent(hookDirection.get());
-        //     return;
-        // }
-
-        // if (state == ClimberState.READY) {
-        //     lift.setPosition(LIFT_UP);
-        //     hook.setPosition(HOOK_OPEN);
-        // }
-
-        // if (state == ClimberState.PULL) {
-        //     clamped = true;
-
-        //     // if (lift.getPosition() <= LIFT_BOTTOM)
-        //     //     lift.setPercent(TorqueDirection.OFF.get());
-        //     // else
-        //     //     lift.setPercent(TorqueDirection.REVERSE.get());
-
-        //     lift.setPercent((lift.getPosition() <= LIFT_BOTTOM ? TorqueDirection.OFF : TorqueDirection.REVERSE).get());
-        //     hook.setVoltage(TorqueDirection.FORWARD.get() * 12);
-
-        // }
     }
 
     public final boolean hasStarted() {
