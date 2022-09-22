@@ -1,7 +1,7 @@
 /**
  * Copyright 2022 Texas Torque.
  * 
- * This file is part of Clutch-2022, which is not licensed for distribution.
+ * This file is part of Paddlefoot-2022, which is not licensed for distribution.
  * For more details, see ./license.txt or write <jus@gtsbr.org>.
  */
 package org.texastorque.auto.commands;

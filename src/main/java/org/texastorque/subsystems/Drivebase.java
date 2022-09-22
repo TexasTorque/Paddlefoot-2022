@@ -1,7 +1,7 @@
 /**
  * Copyright 2022 Texas Torque.
  * 
- * This file is part of Clutch-2022, which is not licensed for distribution.
+ * This file is part of Paddlefoot-2022, which is not licensed for distribution.
  * For more details, see ./license.txt or write <jus@gtsbr.org>.
  */
 package org.texastorque.subsystems;
@@ -64,10 +64,10 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     private final TorqueNavXGyro gyro = TorqueNavXGyro.getInstance();
 
-    private double translationalSpeedCoef, rotationalSpeedCoef;
+    private double translationalSpeedCoef, rotationalSpeedCoef, offset, targetYaw;
     private final double SHOOTING_TRANSLATIONAL_SPEED_COEF = .4, SHOOTING_ROTATIONAL_SPEED_COEF = .5;
 
-    private boolean shouldTarget = true;
+    private boolean shouldTarget = true, inAuto;
 
     public final void setTargetting(final boolean shouldTarget) {
         this.shouldTarget = shouldTarget;
@@ -111,8 +111,14 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     public final void initialize(final TorqueMode mode) {
         if (mode.isTeleop())
             shouldTarget = true;
+            inAuto = false;
 
         reset();
+    }
+
+    public final void setTargetYaw(double targetYaw) {
+        this.targetYaw = targetYaw;
+        inAuto = true;
     }
 
     @Override
@@ -130,10 +136,19 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
         if (shooter.isShooting() && shouldTarget) {
             SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
-            final double offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5) * 1.;
-            final double yaw = shooter.getTargetOffset();
-            SmartDashboard.putNumber("Targeting Yaw", yaw);
-            final double output = -targetPID.calculate(-yaw, offset);
+            offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5) * 1.;
+            targetYaw = shooter.getTargetOffset();
+            SmartDashboard.putNumber("Targeting Yaw", targetYaw);
+            final double output = -targetPID.calculate(-targetYaw, offset);
+            SmartDashboard.putNumber("Locking PID output", output);
+            speeds.omegaRadiansPerSecond = output;
+        }
+
+        if (inAuto) {
+            SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
+            offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5) * 1.;
+            SmartDashboard.putNumber("Targeting Yaw", targetYaw);
+            final double output = -targetPID.calculate(-targetYaw, offset);
             SmartDashboard.putNumber("Locking PID output", output);
             speeds.omegaRadiansPerSecond = output;
         }

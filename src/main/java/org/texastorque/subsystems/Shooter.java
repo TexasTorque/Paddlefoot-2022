@@ -1,7 +1,7 @@
 /**
  * Copyright 2022 Texas Torque.
  * 
- * This file is part of Clutch-2022, which is not licensed for distribution.
+ * This file is part of Paddlefoot-2022, which is not licensed for distribution.
  * For more details, see ./license.txt or write <jus@gtsbr.org>.
  */
 package org.texastorque.subsystems;
@@ -125,7 +125,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-        realVelocityRPM = flywheel.getVelocityRPM() / FLYWHEEEL_REDUCTION;
+        DisjointData data = disjointData.calculate(distance);
 
         camera.update();
 
@@ -134,13 +134,10 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
             hoodSetpoint = HOOD_MIN;
         } else if (state == ShooterState.REGRESSION) {
             distance = getDistance();
-            DisjointData data = disjointData.calculate(distance);
-
             flywheelSpeed = data.getRPM() + (mode.isAuto() ? autoOffset : 0);
             hoodSetpoint = data.getHood();
         } else if (state == ShooterState.DISTANCE) {
             distance = getDistance();
-            DisjointData data = disjointData.calculate(distance);
             flywheelSpeed = data.getRPM();
             hoodSetpoint = data.getHood();
         } else if (state == ShooterState.WARMUP) {
@@ -158,15 +155,15 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
         TorqueSubsystemState.logState(state);
 
-        SmartDashboard.putNumber("Flywheel Real", flywheel.getVelocityRPM());
+        SmartDashboard.putNumber("Flywheel Real", flywheel.getVelocityRPM() / FLYWHEEEL_REDUCTION);
         SmartDashboard.putNumber("Flywheel Req", flywheelSpeed);
         SmartDashboard.putNumber("Distance", getDistance());
+        SmartDashboard.putNumber("Lookup Distance", data.getDistance());
 
         SmartDashboard.putNumber("Flywheel Delta", flywheelSpeed - flywheel.getVelocityRPM());
         SmartDashboard.putBoolean("Is Shooting", isShooting());
         SmartDashboard.putBoolean("Is Ready", isReady());
         SmartDashboard.putNumber("Fly Wheel Current", flywheel.getCurrent());
-        SmartDashboard.putNumber("Real RPM", realVelocityRPM);
     }
 
     public final boolean isShooting() {
