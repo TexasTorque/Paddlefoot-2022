@@ -13,13 +13,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.texastorque.Subsystems;
 import org.texastorque.torquelib.auto.TorqueCommand;
 
-public final class Drive extends TorqueCommand implements Subsystems {
-    private final double distance;
+public final class DriveForTime extends TorqueCommand implements Subsystems {
+    private final double time;
     private ChassisSpeeds speeds;
     private final Pose2d initial;
 
-    public Drive(final double distance, final double x) {
-        this.distance = distance;
+    public DriveForTime(final double time, final double x) {
+        this.time = time;
         this.speeds = new ChassisSpeeds(x, 0, 0);
         this.initial = drivebase.getPose();
     }
@@ -38,8 +38,8 @@ public final class Drive extends TorqueCommand implements Subsystems {
         SmartDashboard.putNumber("Drive ∆X", deltaX);
         SmartDashboard.putNumber("Drive ∆Y", deltaY);
         SmartDashboard.putNumber("Drive ∆H", displacment);
-        SmartDashboard.putBoolean("Drive isgud", Math.abs(displacment) >= Math.abs(distance));
-        SmartDashboard.putBoolean("Drive isgud", Math.abs(drivebase.getDisplacement()) >= Math.abs(distance));
+        // SmartDashboard.putBoolean("Drive isgud", Math.abs(displacment) >= Math.abs(distance));
+        // SmartDashboard.putBoolean("Drive isgud", Math.abs(drivebase.getDisplacement()) >= Math.abs(distance));
     }
 
     @Override
@@ -47,8 +47,8 @@ public final class Drive extends TorqueCommand implements Subsystems {
         final double deltaX = drivebase.getPose().getX() - initial.getX();
         final double deltaY = drivebase.getPose().getY() - initial.getY();
         final double displacment = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-
-        return Math.abs(displacment) >= Math.abs(distance);
+        return true;
+        //return Math.abs(displacment) >= Math.abs(distance);
 
     }
 
