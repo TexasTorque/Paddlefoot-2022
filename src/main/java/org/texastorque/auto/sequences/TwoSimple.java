@@ -26,7 +26,7 @@ public final class TwoSimple extends TorqueSequence implements Subsystems {
         })));
 
         // Drive back and pick up the second ball
-        addBlock(new TorqueBlock(new Drive(-50., -8)));
+        addBlock(new TorqueBlock(new Drive(3., .5)));
         // Align and shoot the balls 
         addBlock(new TorqueBlock(new Shoot(rpm1, hood1, targetYaw, false, 1.4)));
     }
