@@ -20,11 +20,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public final class Climber extends TorqueSubsystem implements Subsystems {
     private static volatile Climber instance;
 
-    public static double LIFT_UP = .1477, HOOK_OPEN = .1477, LIFT_BOTTOM = .1477;
+    public static double LIFT_UP = 97, HOOK_OPEN = .1477, LIFT_BOTTOM = 0, LIFT_MULTIPLIER = .8;
     // TODO(@Juicestus <jus@justusl.com>): FILL THESE
 
     // The right climber is set as a follower via Rev Hardware Client
-    private final TorqueSparkMax lift;
+    private final TorqueSparkMax lift, lift2;
 
     private ClimberState state = ClimberState.OFF;
 
@@ -49,8 +49,10 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
     }
 
     private Climber() {
-        lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
-        lift.configurePID(TorquePID.create(.007).build());
+        lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.RIGHT);
+        lift2 = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
+        lift.configurePID(TorquePID.create(.01).build());
+        lift2.configurePID(TorquePID.create(.01).build());
     }
 
     @Override
@@ -60,6 +62,7 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
 
     public final void stop() {
         lift.setPercent(0);
+        lift2.setPercent(0);
     }
 
     @Override
@@ -67,15 +70,22 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
 
         SmartDashboard.putNumber("Climber Lift Position", lift.getPosition());
         SmartDashboard.putString("Lift Dir", liftDirection.toString());
+        SmartDashboard.putString("Climber State", state.toString());
 
         if (state == ClimberState.MANUAL) {
-            lift.setPercent(TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
+            lift.setPercent(TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP) * LIFT_MULTIPLIER);
+            lift2.setPercent(-TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP) * LIFT_MULTIPLIER);
+            // lift.setPercent(liftDirection.get());
+            // lift2.setPercent(-liftDirection.get());
         } else if (state == ClimberState.RETRACT) {
             lift.setPosition(LIFT_BOTTOM);
+            lift2.setPosition(-LIFT_BOTTOM);
         } else if (state == ClimberState.EXTEND) {
             lift.setPosition(LIFT_UP);
+            lift2.setPosition(-LIFT_UP);
         } else {
             lift.setPercent(0);
+            lift2.setPercent(0);
         }
 
     }

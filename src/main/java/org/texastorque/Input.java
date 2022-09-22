@@ -166,9 +166,10 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
     private final void updateClimber() {
-        climber.setState(ClimberState.MANUAL);
-        climber.setManualLift(operator.getDPADUp(), operator.getDPADDown());
-        if (operator.getRightTrigger())
+        if (operator.getDPADUp() || operator.getDPADDown()) {
+            climber.setState(ClimberState.MANUAL);
+            climber.setManualLift(operator.getDPADUp(), operator.getDPADDown());
+        } else if (operator.getRightTrigger())
             climber.setState(ClimberState.EXTEND);
         else if (operator.getLeftTrigger())
             climber.setState(ClimberState.RETRACT);

@@ -135,6 +135,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         } else if (state == ShooterState.REGRESSION) {
             distance = getDistance();
             DisjointData data = disjointData.calculate(distance);
+
             flywheelSpeed = data.getRPM() + (mode.isAuto() ? autoOffset : 0);
             hoodSetpoint = data.getHood();
         } else if (state == ShooterState.DISTANCE) {
