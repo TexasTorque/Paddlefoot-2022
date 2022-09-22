@@ -79,9 +79,8 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     private Shooter() {
         camera = new TorqueLight("gloworm");
 
-        // The right flywheel is set as a follower via Rev Hardware Client
-        canWheel1 = new CANSparkMax(Ports.SHOOTER.FLYWHEEL.RIGHT, MotorType.kBrushed);
-        canWheel2 = new CANSparkMax(Ports.SHOOTER.FLYWHEEL.RIGHT, MotorType.kBrushed);
+        canWheel1 = new CANSparkMax(Ports.SHOOTER.FLYWHEEL.RIGHT, MotorType.kBrushless);
+        canWheel2 = new CANSparkMax(Ports.SHOOTER.FLYWHEEL.RIGHT, MotorType.kBrushless);
         canWheel2.follow(canWheel1, true);
         shootPID = canWheel1.getPIDController();
         shootPID.setP(.000005);
