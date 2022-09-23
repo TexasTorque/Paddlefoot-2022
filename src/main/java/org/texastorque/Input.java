@@ -16,8 +16,10 @@ import org.texastorque.subsystems.Magazine;
 import org.texastorque.subsystems.Shooter.ShooterState;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueInput;
+import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueSlewLimiter;
+import org.texastorque.torquelib.control.TorqueToggle;
 import org.texastorque.torquelib.control.TorqueTraversableRange;
 import org.texastorque.torquelib.control.TorqueTraversableSelection;
 import org.texastorque.torquelib.util.GenericController;
@@ -66,6 +68,10 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
     private final static double DEADBAND = .04;
 
+    private final TorqueClick elevatorUp = new TorqueClick();
+    private final TorqueClick elevatorDown = new TorqueClick();
+    private final TorqueToggle intakeOut = new TorqueToggle();
+
     private final void updateDrivebase() {
         SmartDashboard.putNumber("Speed Shifter", (rotationalSpeeds.get() - .5) * 2.);
 
@@ -103,10 +109,14 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
     private final void updateIntake() {
+        intakeOut.calculate(operator.getBButton());
+
         if (driver.getRightTrigger())
             intake.setState(IntakeState.INTAKE);
         else if (driver.getAButton())
             intake.setState(IntakeState.OUTAKE);
+        else if (intakeOut.get()) 
+            intake.setState(IntakeState.EXTENDED);
         else
             intake.setState(IntakeState.PRIMED);
     }
@@ -154,12 +164,12 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             shooter.setState(ShooterState.REGRESSION);
         } else if (driver.getYButton()) {
             shooter.setState(ShooterState.SETPOINT);
-            shooter.setFlywheelSpeed(1500);
+            shooter.setFlywheelSpeed(1700);
             shooter.setHoodPosition(30);
         } else if (driver.getXButton()) {
             shooter.setState(ShooterState.SETPOINT);
-            shooter.setFlywheelSpeed(400);
-            shooter.setHoodPosition(20);
+            shooter.setFlywheelSpeed(1200);
+            shooter.setHoodPosition(25);
         } else {
             shooter.setState(ShooterState.OFF);
         }
@@ -169,13 +179,14 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         if (operator.getDPADUp() || operator.getDPADDown()) {
             climber.setState(ClimberState.MANUAL);
             climber.setManualLift(operator.getDPADUp(), operator.getDPADDown());
-        } else if (operator.getRightTrigger())
+        } else if (elevatorUp.calculate(operator.getYButton())) {
             climber.setState(ClimberState.EXTEND);
-        else if (operator.getLeftTrigger())
+        } else if (elevatorDown.calculate(operator.getAButton()))
             climber.setState(ClimberState.RETRACT);
         else
             climber.setState(ClimberState.OFF);
 
+       
     }
 
     public static final synchronized Input getInstance() {

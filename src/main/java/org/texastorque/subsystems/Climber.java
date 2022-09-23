@@ -14,14 +14,12 @@ import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
 import org.texastorque.torquelib.util.TorqueMath;
-
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class Climber extends TorqueSubsystem implements Subsystems {
     private static volatile Climber instance;
 
-    public static double LIFT_UP = 97, HOOK_OPEN = .1477, LIFT_BOTTOM = 0, LIFT_MULTIPLIER = .8;
-    // TODO(@Juicestus <jus@justusl.com>): FILL THESE
+    public static double LIFT_UP = 97, LIFT_BOTTOM = 0, LIFT_MULTIPLIER = .8;
 
     // The right climber is set as a follower via Rev Hardware Client
     private final TorqueSparkMax lift, lift2;
@@ -51,8 +49,8 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
     private Climber() {
         lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.RIGHT);
         lift2 = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
-        lift.configurePID(TorquePID.create(.01).build());
-        lift2.configurePID(TorquePID.create(.01).build());
+        lift.configurePID(TorquePID.create(.02).build());
+        lift2.configurePID(TorquePID.create(.02).build());
     }
 
     @Override
@@ -75,8 +73,6 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         if (state == ClimberState.MANUAL) {
             lift.setPercent(TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP) * LIFT_MULTIPLIER);
             lift2.setPercent(-TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP) * LIFT_MULTIPLIER);
-            // lift.setPercent(liftDirection.get());
-            // lift2.setPercent(-liftDirection.get());
         } else if (state == ClimberState.RETRACT) {
             lift.setPosition(LIFT_BOTTOM);
             lift2.setPosition(-LIFT_BOTTOM);

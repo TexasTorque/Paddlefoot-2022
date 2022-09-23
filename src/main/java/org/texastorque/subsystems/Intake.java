@@ -30,7 +30,8 @@ public final class Intake extends TorqueSubsystem implements Subsystems {
     public enum IntakeState implements TorqueSubsystemState {
         INTAKE(-ROLLER_MAX_SPEED, ROTARY_DOWN_POSITION),
         PRIMED(0, ROTARY_UP_POSITION),
-        OUTAKE(ROLLER_MAX_SPEED, ROTARY_DOWN_POSITION);
+        OUTAKE(ROLLER_MAX_SPEED, ROTARY_DOWN_POSITION),
+        EXTENDED(0, ROTARY_DOWN_POSITION); // For climb
 
         private final double direction, position;
 

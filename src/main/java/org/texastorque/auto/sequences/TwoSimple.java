@@ -12,7 +12,6 @@ import org.texastorque.auto.commands.Shoot;
 import org.texastorque.torquelib.auto.TorqueBlock;
 import org.texastorque.torquelib.auto.TorqueSequence;
 import org.texastorque.torquelib.auto.commands.TorqueExecute;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 
@@ -26,7 +25,7 @@ public final class TwoSimple extends TorqueSequence implements Subsystems {
         })));
 
         // Drive back and pick up the second ball
-        addBlock(new TorqueBlock(new Drive(3., .5)));
+        addBlock(new TorqueBlock(new Drive(1.5, .5)));
         // Align and shoot the balls 
         addBlock(new TorqueBlock(new Shoot(rpm1, hood1, targetYaw, false, 1.4)));
     }

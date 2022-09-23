@@ -74,7 +74,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     }
 
     // TODO: TUNE THIS!
-    private final TorquePID targetPID = TorquePID.create(.08).build();
+    private final TorquePID targetPID = TorquePID.create(.16).addDerivative(1).build();
 
     private Drivebase() {
         backLeft = buildSwerveModule(0, Ports.DRIVEBASE.TRANSLATIONAL.LEFT.BACK, Ports.DRIVEBASE.ROTATIONAL.LEFT.BACK);

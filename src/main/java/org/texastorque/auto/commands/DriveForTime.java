@@ -10,7 +10,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
 import org.texastorque.Subsystems;
 import org.texastorque.torquelib.auto.TorqueCommand;
 
@@ -44,13 +43,10 @@ public final class DriveForTime extends TorqueCommand implements Subsystems {
 
     @Override
     protected final boolean endCondition() {
-        if (Timer.getFPGATimestamp() - startTime >= time) {
-            return true;
-        } else {
-            return false;
-        }
+        return (Timer.getFPGATimestamp() - startTime >= time);
 
     }
+
     @Override
     protected final void end() {
         drivebase.setSpeeds(new ChassisSpeeds(0, 0, 0));
