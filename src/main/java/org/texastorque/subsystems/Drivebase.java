@@ -36,14 +36,12 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static volatile Drivebase instance;
 
     public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 16, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 16,
-            DRIVE_MAX_ROTATIONAL_SPEED = 16 * Math.PI, TOLERANCE = 5;
+            DRIVE_MAX_ROTATIONAL_SPEED = 16 * Math.PI, TOLERANCE = 7;
 
     private static final double DRIVE_GEARING = .1875, // Drive rotations per motor rotations
             DRIVE_WHEEL_RADIUS = Units.inchesToMeters(1.788), DISTANCE_TO_CENTER_X = Units.inchesToMeters(10.875),
             DISTANCE_TO_CENTER_Y = Units.inchesToMeters(10.875);
-    // 
-    //     public static final KPID DRIVE_PID = new KPID(.00048464, 0, 0, 0, -1, 1, .2), 
-    // ROTATE_PID = new KPID(.3, 0, 0, 0, -1, 1);
+
     public static final TorquePID DRIVE_PID = TorquePID.create(.00048464).addIntegralZone(.2).build();
     public static final TorquePID ROTATE_PID = TorquePID.create(.3).build();
 
@@ -58,7 +56,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private final TorqueSwerveOdometry odometry;
 
     private final TorqueSwerveModule2021 backLeft, backRight, frontLeft, frontRight;
-    private SwerveModuleState[] swerveModuleStates; // This can be made better
+    private SwerveModuleState[] swerveModuleStates;
 
     private ChassisSpeeds speeds = new ChassisSpeeds(0, 0, 0);
 
@@ -74,7 +72,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     }
 
     // TODO: TUNE THIS!
-    private final TorquePID targetPID = TorquePID.create(.16).addDerivative(1).build();
+    private final TorquePID targetPID = TorquePID.create(.25).build();
 
     private Drivebase() {
         backLeft = buildSwerveModule(0, Ports.DRIVEBASE.TRANSLATIONAL.LEFT.BACK, Ports.DRIVEBASE.ROTATIONAL.LEFT.BACK);
@@ -111,7 +109,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     public final void initialize(final TorqueMode mode) {
         if (mode.isTeleop())
             shouldTarget = true;
-            inAuto = false;
+        inAuto = false;
 
         reset();
     }
@@ -154,9 +152,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         }
 
         swerveModuleStates = kinematics.toSwerveModuleStates(speeds);
-
-        // Literaly does the same thing LMFAO, my implementaiton is actually better 0:
-        // TorqueSwerveModule2021.equalizedDriveRatio(swerveModuleStates, DRIVE_MAX_TRANSLATIONAL_SPEED);
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DRIVE_MAX_TRANSLATIONAL_SPEED);
 
         frontLeft.setDesiredState(swerveModuleStates[0]);

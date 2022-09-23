@@ -172,6 +172,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             shooter.setHoodPosition(25);
         } else {
             shooter.setState(ShooterState.OFF);
+            //shooter.setState(ShooterState.IDLE);
         }
     }
 

@@ -43,7 +43,7 @@ public final class DriveForTime extends TorqueCommand implements Subsystems {
 
     @Override
     protected final boolean endCondition() {
-        return (Timer.getFPGATimestamp() - startTime >= time);
+        return time != -1 && (Timer.getFPGATimestamp() - startTime >= time);
 
     }
 
