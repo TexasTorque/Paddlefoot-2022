@@ -82,12 +82,7 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
         ready.add(shooter.isReady());
         locked.add(drivebase.isLocked());
 
-        if (ready.any() && locked.any()) {
-            beltDirection = MAG_UP;
-            gateDirection = TorqueDirection.FORWARD;
-        }
-
-        if (ready.any() && mode.isAuto()) {
+        if (ready.any() && (locked.any() || mode.isAuto())) {
             beltDirection = MAG_UP;
             gateDirection = TorqueDirection.FORWARD;
         }

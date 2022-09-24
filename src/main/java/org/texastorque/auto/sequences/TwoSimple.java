@@ -15,11 +15,13 @@ import org.texastorque.subsystems.Intake.IntakeState;
 import org.texastorque.torquelib.auto.TorqueBlock;
 import org.texastorque.torquelib.auto.TorqueSequence;
 import org.texastorque.torquelib.auto.commands.TorqueExecute;
+import org.texastorque.torquelib.sensors.TorqueNavXGyro;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 
 public final class TwoSimple extends TorqueSequence implements Subsystems {
-    private double rpm1 = 1300, hood1 = 25;
+    private double rpm1 = 1800, hood1 = 25;
 
     public TwoSimple() {
         addBlock(new TorqueBlock(new TorqueExecute(() -> {
@@ -36,7 +38,7 @@ public final class TwoSimple extends TorqueSequence implements Subsystems {
         addBlock(new TorqueBlock(new Shoot(rpm1, hood1, 5.2)));
 
         // addBlock(new TorqueBlock(new TorqueExecute(() -> {
-            
+
         //     Input.getInstance().invertDrivebaseControls();
         // })));
 
