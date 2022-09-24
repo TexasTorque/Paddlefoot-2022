@@ -65,7 +65,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private double translationalSpeedCoef, rotationalSpeedCoef, offset, targetYaw;
     private final double SHOOTING_TRANSLATIONAL_SPEED_COEF = .4, SHOOTING_ROTATIONAL_SPEED_COEF = .5;
 
-    private boolean shouldTarget = false;
+    private boolean shouldTarget = false, shooting = false;
 
     // TODO: TUNE THIS!
     private final TorquePID targetPID = TorquePID.create(.25).build();
@@ -122,7 +122,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                     speeds.vyMetersPerSecond * translatingSpeed, speeds.omegaRadiansPerSecond * rotaitonalSpeed,
                     gyro.getRotation2dClockwise());
 
-        if (shooter.isShooting() && shouldTarget) {
+        if (shooter.isShooting() && shouldTarget && !mode.isAuto()) {
             SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
             offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5) * 1.;
             targetYaw = shooter.getTargetOffset();
@@ -176,6 +176,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
         SmartDashboard.putString("Speeds", String.format("(%02.3f, %02.3f, %02.3f)", speeds.vxMetersPerSecond,
                 speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond));
+
     }
 
     public final void reset() {

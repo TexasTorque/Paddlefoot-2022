@@ -6,7 +6,6 @@
  */
 package org.texastorque;
 
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.texastorque.subsystems.Shooter;
@@ -16,7 +15,6 @@ import org.texastorque.subsystems.Magazine;
 import org.texastorque.subsystems.Shooter.ShooterState;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueInput;
-import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueSlewLimiter;
 import org.texastorque.torquelib.control.TorqueTraversableRange;
 import org.texastorque.torquelib.control.TorqueTraversableSelection;
@@ -52,13 +50,13 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         invertCoefficient = -1;
     }
 
-    private final PIDController rotationPID = TorquePID.create(.02 / 4).addDerivative(.001)
-            .build().createPIDController((pid) -> {
-                pid.enableContinuousInput(0, 360);
-                return pid;
-            });
+    // private final PIDController rotationPID = TorquePID.create(.02 / 4).addDerivative(.001)
+    //         .build().createPIDController((pid) -> {
+    //             pid.enableContinuousInput(0, 360);
+    //             return pid;
+    //         });
 
-    private double lastRotation = drivebase.getGyro().getRotation2d().getDegrees();
+    private double lastRotation = drivebase.getGyro().getRotation2d().getDegrees(), xVelo, yVelo, rVelo;
 
     private final TorqueSlewLimiter xLimiter = new TorqueSlewLimiter(5, 10),
             yLimiter = new TorqueSlewLimiter(5, 10);
@@ -71,10 +69,10 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
         double rotationRequested = -driver.getRightXAxis();
 
-        if (rotationRequested == 0)
-            rotationRequested = -rotationPID.calculate(rotationReal, lastRotation);
-        else
-            lastRotation = rotationReal;
+        // if (rotationRequested == 0)
+        //     rotationRequested = -rotationPID.calculate(rotationReal, lastRotation);
+        // else
+        //     lastRotation = rotationReal;
 
         SmartDashboard.putNumber("PID O", rotationRequested);
         SmartDashboard.putNumber("Rot Delta", rotationReal - lastRotation);
@@ -93,12 +91,16 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             return;
         }
 
-        final double xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
+        xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
                 xLimiter::calculate);
-        final double yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
+        yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
                 yLimiter::calculate);
-        final double rVelo = rotationRequested * invertCoefficient;
+        rVelo = rotationRequested;
         drivebase.setSpeeds(new ChassisSpeeds(xVelo, yVelo, rVelo));
+        
+        SmartDashboard.putNumber("X Velo", xVelo);
+        SmartDashboard.putNumber("Y Velo", yVelo);
+        SmartDashboard.putNumber("R Velo", rVelo);
     }
 
     private final void updateIntake() {
@@ -117,18 +119,18 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
     private final void updateManualMagazineBeltControls(final GenericController controller) {
-        if (controller.getDPADUp())
+        if (controller.getRightTrigger())
             magazine.setBeltDirection(Magazine.MAG_UP);
-        else if (controller.getDPADDown())
+        else if (controller.getLeftTrigger())
             magazine.setBeltDirection(Magazine.MAG_DOWN);
         else
             magazine.setBeltDirection(TorqueDirection.OFF);
     }
 
     private final void updateManualMagazineGateControls(final GenericController controller) {
-        if (controller.getDPADUp())
+        if (controller.getRightBumper())
             magazine.setGateDirection(TorqueDirection.FORWARD);
-        else if (controller.getDPADDown())
+        else if (controller.getLeftBumper())
             magazine.setGateDirection(TorqueDirection.REVERSE);
         else
             magazine.setGateDirection(TorqueDirection.OFF);
