@@ -65,11 +65,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private double translationalSpeedCoef, rotationalSpeedCoef, offset, targetYaw;
     private final double SHOOTING_TRANSLATIONAL_SPEED_COEF = .4, SHOOTING_ROTATIONAL_SPEED_COEF = .5;
 
-    private boolean shouldTarget = true, inAuto;
-
-    public final void setTargetting(final boolean shouldTarget) {
-        this.shouldTarget = shouldTarget;
-    }
+    private boolean shouldTarget = false;
 
     // TODO: TUNE THIS!
     private final TorquePID targetPID = TorquePID.create(.25).build();
@@ -109,14 +105,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     public final void initialize(final TorqueMode mode) {
         if (mode.isTeleop())
             shouldTarget = true;
-        inAuto = false;
 
         reset();
-    }
-
-    public final void setTargetYaw(double targetYaw) {
-        this.targetYaw = targetYaw;
-        inAuto = true;
     }
 
     @Override
@@ -136,15 +126,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
             SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
             offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5) * 1.;
             targetYaw = shooter.getTargetOffset();
-            SmartDashboard.putNumber("Targeting Yaw", targetYaw);
-            final double output = -targetPID.calculate(-targetYaw, offset);
-            SmartDashboard.putNumber("Locking PID output", output);
-            speeds.omegaRadiansPerSecond = output;
-        }
-
-        if (inAuto) {
-            SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
-            offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5) * 1.;
             SmartDashboard.putNumber("Targeting Yaw", targetYaw);
             final double output = -targetPID.calculate(-targetYaw, offset);
             SmartDashboard.putNumber("Locking PID output", output);

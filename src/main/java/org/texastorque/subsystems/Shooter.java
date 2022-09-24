@@ -163,6 +163,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putNumber("Right Flywheel Real", flywheelRight.getVelocityRPM() / FLYWHEEEL_REDUCTION);
 
         SmartDashboard.putNumber("Flywheel Req", flywheelSpeed);
+        SmartDashboard.putNumber("Hood Req", hoodSetpoint);
         SmartDashboard.putNumber("Distance", getDistance());
         SmartDashboard.putNumber("Lookup Distance", data.getDistance());
 

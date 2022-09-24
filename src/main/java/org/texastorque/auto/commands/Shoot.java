@@ -45,7 +45,6 @@ public final class Shoot extends TorqueCommand implements Subsystems {
         magazine.setGateDirection(TorqueDirection.OFF);
         magazine.setBeltDirection(TorqueDirection.OFF);
         shooter.setState(ShooterState.OFF);
-
     }
 
     // turret.setState(TurretState.CENTER);
