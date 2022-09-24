@@ -37,9 +37,13 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
         this.gateDirection = direction;
     }
 
-    public final void setBeltDirection(final TorqueDirection direction) { this.beltDirection = direction; }
+    public final void setBeltDirection(final TorqueDirection direction) {
+        this.beltDirection = direction;
+    }
 
-    public final void setGateDirection(final TorqueDirection direction) { this.gateDirection = direction; }
+    public final void setGateDirection(final TorqueDirection direction) {
+        this.gateDirection = direction;
+    }
 
     @Override
     public final void initialize(final TorqueMode mode) {
@@ -55,15 +59,19 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-        if (intake.isOutaking()) { beltDirection = MAG_DOWN; }
-        if (intake.isIntaking()) { beltDirection = MAG_UP; }
+        if (intake.isOutaking()) {
+            beltDirection = MAG_DOWN;
+        }
+        if (intake.isIntaking()) {
+            beltDirection = MAG_UP;
+        }
 
         if (shooter.isShooting()) {
             if (!shootingStarted) {
                 shootingStarted = true;
                 shootingStartedTime = Timer.getFPGATimestamp();
             }
-            if (Timer.getFPGATimestamp() - shootingStartedTime <= DROP_TIME) {
+            if (Timer.getFPGATimestamp() - shootingStartedTime <= (mode.isAuto() ? 0. : DROP_TIME)) {
                 beltDirection = MAG_DOWN;
                 gateDirection = TorqueDirection.REVERSE;
             }
@@ -75,6 +83,11 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
         locked.add(drivebase.isLocked());
 
         if (ready.any() && locked.any()) {
+            beltDirection = MAG_UP;
+            gateDirection = TorqueDirection.FORWARD;
+        }
+
+        if (ready.any() && mode.isAuto()) {
             beltDirection = MAG_UP;
             gateDirection = TorqueDirection.FORWARD;
         }

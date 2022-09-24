@@ -6,9 +6,12 @@
  */
 package org.texastorque.auto.sequences;
 
+import org.texastorque.Input;
 import org.texastorque.Subsystems;
 import org.texastorque.auto.commands.Drive;
+import org.texastorque.auto.commands.DriveForTime;
 import org.texastorque.auto.commands.Shoot;
+import org.texastorque.subsystems.Intake.IntakeState;
 import org.texastorque.torquelib.auto.TorqueBlock;
 import org.texastorque.torquelib.auto.TorqueSequence;
 import org.texastorque.torquelib.auto.commands.TorqueExecute;
@@ -16,7 +19,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 
 public final class TwoSimple extends TorqueSequence implements Subsystems {
-    private double rpm1 = 1200, hood1 = 30, targetYaw = 3;
+    private double rpm1 = 1300, hood1 = 25;
 
     public TwoSimple() {
         addBlock(new TorqueBlock(new TorqueExecute(() -> {
@@ -24,9 +27,18 @@ public final class TwoSimple extends TorqueSequence implements Subsystems {
                     Rotation2d.fromDegrees(135));
         })));
 
+        addBlock(new TorqueBlock(new TorqueExecute(() -> {
+            intake.setState(IntakeState.INTAKE);
+        })));
         // Drive back and pick up the second ball
-        addBlock(new TorqueBlock(new Drive(1.5, .5)));
+        addBlock(new TorqueBlock(new DriveForTime(1., -8)));
         // Align and shoot the balls 
-        addBlock(new TorqueBlock(new Shoot(rpm1, hood1, targetYaw, false, 1.4)));
+        addBlock(new TorqueBlock(new Shoot(rpm1, hood1, 5.2)));
+
+        // addBlock(new TorqueBlock(new TorqueExecute(() -> {
+            
+        //     Input.getInstance().invertDrivebaseControls();
+        // })));
+
     }
 }

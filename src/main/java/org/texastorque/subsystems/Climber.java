@@ -19,7 +19,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public final class Climber extends TorqueSubsystem implements Subsystems {
     private static volatile Climber instance;
 
-    public static double LIFT_UP = 97, LIFT_BOTTOM = 0, LIFT_MULTIPLIER = .8;
+    public static double LIFT_UP = 108, LIFT_BOTTOM = 0, LIFT_MULTIPLIER = .8;
 
     // The right climber is set as a follower via Rev Hardware Client
     private final TorqueSparkMax lift, lift2;
@@ -71,8 +71,10 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Climber State", state.toString());
 
         if (state == ClimberState.MANUAL) {
-            lift.setPercent(TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP) * LIFT_MULTIPLIER);
-            lift2.setPercent(-TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP) * LIFT_MULTIPLIER);
+            lift.setPercent(TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
+                    * LIFT_MULTIPLIER);
+            lift2.setPercent(-TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
+                    * LIFT_MULTIPLIER);
         } else if (state == ClimberState.RETRACT) {
             lift.setPosition(LIFT_BOTTOM);
             lift2.setPosition(-LIFT_BOTTOM);
