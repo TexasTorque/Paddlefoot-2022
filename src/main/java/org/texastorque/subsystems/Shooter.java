@@ -138,9 +138,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
             flywheelSpeed = data.getRPM() + (mode.isAuto() ? autoOffset : 0);
             hoodSetpoint = data.getHood();
         } else if (state == ShooterState.DISTANCE) {
-            distance = getDistance();
-            flywheelSpeed = data.getRPM();
-            hoodSetpoint = data.getHood();
         } else if (state == ShooterState.IDLE) {
             flywheelLeft.setVelocityRPM(200);
             flywheelLeft.setVoltage(-flywheelLeft.getVoltage());

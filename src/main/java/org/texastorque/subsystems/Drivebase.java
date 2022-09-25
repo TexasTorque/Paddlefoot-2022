@@ -65,7 +65,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private double translationalSpeedCoef, rotationalSpeedCoef, offset, targetYaw;
     private final double SHOOTING_TRANSLATIONAL_SPEED_COEF = .4, SHOOTING_ROTATIONAL_SPEED_COEF = .5;
 
-    private boolean shouldTarget = false, shooting = false;
+    private boolean shouldTarget = false;
 
     // TODO: TUNE THIS!
     private final TorquePID targetPID = TorquePID.create(.25).build();

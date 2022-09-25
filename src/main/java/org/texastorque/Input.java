@@ -80,8 +80,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         drivebase.setSpeedCoefs(translationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()),
                 rotationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()));
 
-        drivebase.setSpeedCoefs(1, 1);
-
         final boolean noInput = TorqueMath.toleranced(driver.getLeftYAxis(), DEADBAND)
                 && TorqueMath.toleranced(driver.getLeftXAxis(), DEADBAND)
                 && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND);
@@ -155,13 +153,13 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         } else if (driver.getLeftTrigger()) {
             shooter.setState(ShooterState.REGRESSION);
         } else if (driver.getYButton()) {
-            shooter.setState(ShooterState.SETPOINT);
-            shooter.setFlywheelSpeed(1700);
-            shooter.setHoodPosition(30);
-        } else if (driver.getXButton()) {
-            shooter.setState(ShooterState.SETPOINT);
-            shooter.setFlywheelSpeed(1200);
+            shooter.setState(ShooterState.DISTANCE);
+            shooter.setFlywheelSpeed(2000);
             shooter.setHoodPosition(25);
+        } else if (driver.getXButton()) {
+            shooter.setState(ShooterState.DISTANCE);
+            shooter.setFlywheelSpeed(1775);
+            shooter.setHoodPosition(23);
         } else {
             shooter.setState(ShooterState.OFF);
             //shooter.setState(ShooterState.IDLE);

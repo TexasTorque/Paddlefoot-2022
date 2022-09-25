@@ -19,7 +19,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 
 public final class TwoSimple extends TorqueSequence implements Subsystems {
-    private double rpm1 = 1775, hood1 = 23;
+    private double rpm1 = 1800, hood1 = 23;
 
     public TwoSimple() {
         addBlock(new TorqueBlock(new TorqueExecute(() -> {
@@ -33,7 +33,7 @@ public final class TwoSimple extends TorqueSequence implements Subsystems {
         // Drive back and pick up the second ball
         addBlock(new TorqueBlock(new DriveForTime(1., -8)));
         // Align and shoot the balls 
-        addBlock(new TorqueBlock(new Shoot(rpm1, hood1, 5.5)));
+        addBlock(new TorqueBlock(new Shoot(rpm1, hood1, 7)));
 
         addBlock(new TorqueBlock(new TorqueExecute(() -> {
             Input.getInstance().invertDrivebaseControls();
