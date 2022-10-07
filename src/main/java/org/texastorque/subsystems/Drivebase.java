@@ -35,8 +35,8 @@ import org.texastorque.torquelib.util.TorqueSwerveOdometry;
 public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static volatile Drivebase instance;
 
-    public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 16, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 16,
-            DRIVE_MAX_ROTATIONAL_SPEED = 16 * Math.PI, TOLERANCE = 7;
+    public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 25, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 25, // TEST NEW MAX SPEEDS
+            DRIVE_MAX_ROTATIONAL_SPEED = 25 * Math.PI, TOLERANCE = 7;
 
     private static final double DRIVE_GEARING = .1875, // Drive rotations per motor rotations
             DRIVE_WHEEL_RADIUS = Units.inchesToMeters(1.788), DISTANCE_TO_CENTER_X = Units.inchesToMeters(10.875),
@@ -111,15 +111,15 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-        final double translatingSpeed = (shooter.isShooting() ? SHOOTING_TRANSLATIONAL_SPEED_COEF
+        final double maxTranslatingSpeed = (shooter.isShooting() ? SHOOTING_TRANSLATIONAL_SPEED_COEF
                 : translationalSpeedCoef)
                 * DRIVE_MAX_TRANSLATIONAL_SPEED;
-        final double rotaitonalSpeed = (shooter.isShooting() ? SHOOTING_ROTATIONAL_SPEED_COEF : rotationalSpeedCoef)
+        final double maxRotationalSpeed = (shooter.isShooting() ? SHOOTING_ROTATIONAL_SPEED_COEF : rotationalSpeedCoef)
                 * DRIVE_MAX_ROTATIONAL_SPEED;
 
         if (mode.isTeleop())
-            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * translatingSpeed,
-                    speeds.vyMetersPerSecond * translatingSpeed, speeds.omegaRadiansPerSecond * rotaitonalSpeed,
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * maxTranslatingSpeed,
+                    speeds.vyMetersPerSecond * maxTranslatingSpeed, speeds.omegaRadiansPerSecond * maxRotationalSpeed,
                     gyro.getRotation2dClockwise());
 
         if (shooter.isShooting() && shouldTarget && !mode.isAuto()) {
@@ -189,11 +189,11 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 DRIVE_MAX_TRANSLATIONAL_ACCELERATION, DRIVE_FEED_FORWARD);
     }
 
-    public static final synchronized Drivebase getInstance() {
-        return instance == null ? instance = new Drivebase() : instance;
-    }
-
     public final double getDisplacement() {
         return frontLeft.getDisplacement();
+    }
+
+    public static final synchronized Drivebase getInstance() {
+        return instance == null ? instance = new Drivebase() : instance;
     }
 }

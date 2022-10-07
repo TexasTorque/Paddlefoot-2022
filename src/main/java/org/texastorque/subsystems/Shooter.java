@@ -30,7 +30,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     private static volatile Shooter instance;
 
     public static final double HOOD_MIN = 0, HOOD_MAX = 35, ERROR = 75, FLYWHEEEL_MAX = 3000, FLYWHEEEL_IDLE = .1,
-            FLYWHEEEL_REDUCTION = 5 / 3., CAMERA_HEIGHT = Units.inchesToMeters(33),
+            FLYWHEEEL_REDUCTION = 5 / 3., CAMERA_HEIGHT = Units.inchesToMeters(41),
             TARGET_HEIGHT = 2.6416;
 
     public static final double HUB_RADIUS = .6778625;
@@ -162,7 +162,10 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putNumber("Flywheel Req", flywheelSpeed);
         SmartDashboard.putNumber("Hood Req", hoodSetpoint);
         SmartDashboard.putNumber("Distance", getDistance());
-        SmartDashboard.putNumber("Lookup Distance", data.getDistance());
+
+        SmartDashboard.putNumber("Distance From Lookup Table", data.getDistance());
+        SmartDashboard.putNumber("Far Lookup Distance", data.getHighestPoint());
+        SmartDashboard.putNumber("Close Lookup Distance", data.getLowestPoint());
 
         SmartDashboard.putNumber("Flywheel Delta", flywheelSpeed - flywheelLeft.getVelocityRPM() / FLYWHEEEL_REDUCTION);
         SmartDashboard.putBoolean("Is Shooting", isShooting());
@@ -206,6 +209,13 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     public final double calculateDistance() {
         return TorqueLight.getDistanceToElevatedTarget(camera, CAMERA_HEIGHT, TARGET_HEIGHT, CAMERA_ANGLE);
+    }
+
+    public final double getDistanceVelocity(double distance) {
+        double gravity = -9.8;
+        double FINAL_ANGLE = 0;
+        double velocity = Math.sqrt(Math.sqrt((gravity * distance) / Math.sin(2 * Math.toRadians(FINAL_ANGLE))));
+        return 0;
     }
 
     public final double getTargetOffset() {

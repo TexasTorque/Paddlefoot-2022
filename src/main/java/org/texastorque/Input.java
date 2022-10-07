@@ -6,6 +6,7 @@
  */
 package org.texastorque;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.texastorque.subsystems.Shooter;
@@ -15,6 +16,7 @@ import org.texastorque.subsystems.Magazine;
 import org.texastorque.subsystems.Shooter.ShooterState;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueInput;
+import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueSlewLimiter;
 import org.texastorque.torquelib.control.TorqueTraversableRange;
 import org.texastorque.torquelib.control.TorqueTraversableSelection;
@@ -43,6 +45,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final TorqueTraversableSelection<Double> translationalSpeeds = new TorqueTraversableSelection<Double>(1, .5,
             .6, .7),
             rotationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .75, 1.);
+            
     // Incredibly basic solution for inverting the driver controls after an auto routine.
     private double invertCoefficient = 1;
 
@@ -50,11 +53,11 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         invertCoefficient = -1;
     }
 
-    // private final PIDController rotationPID = TorquePID.create(.02 / 4).addDerivative(.001)
-    //         .build().createPIDController((pid) -> {
-    //             pid.enableContinuousInput(0, 360);
-    //             return pid;
-    //         });
+    private final PIDController rotationPID = TorquePID.create(.02 / 4).addDerivative(.001)
+            .build().createPIDController((pid) -> {
+                pid.enableContinuousInput(0, 360);
+                return pid;
+            });
 
     private double lastRotation = drivebase.getGyro().getRotation2d().getDegrees(), xVelo, yVelo, rVelo;
 
@@ -69,10 +72,10 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
         double rotationRequested = -driver.getRightXAxis();
 
-        // if (rotationRequested == 0)
-        //     rotationRequested = -rotationPID.calculate(rotationReal, lastRotation);
-        // else
-        //     lastRotation = rotationReal;
+        if (rotationRequested == 0)
+            rotationRequested = -rotationPID.calculate(rotationReal, lastRotation);
+        else
+            lastRotation = rotationReal;
 
         SmartDashboard.putNumber("PID O", rotationRequested);
         SmartDashboard.putNumber("Rot Delta", rotationReal - lastRotation);
