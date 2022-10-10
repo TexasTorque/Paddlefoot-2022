@@ -35,6 +35,8 @@ import org.texastorque.torquelib.util.TorqueSwerveOdometry;
 public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static volatile Drivebase instance;
 
+    public boolean driving = false;
+
     public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 25, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 25, // TEST NEW MAX SPEEDS
             DRIVE_MAX_ROTATIONAL_SPEED = 25 * Math.PI, TOLERANCE = 7;
 
@@ -68,7 +70,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private boolean shouldTarget = false;
 
     // TODO: TUNE THIS!
-    private final TorquePID targetPID = TorquePID.create(.25).build();
+    private final TorquePID targetPID = TorquePID.create(.6).build();
 
     private Drivebase() {
         backLeft = buildSwerveModule(0, Ports.DRIVEBASE.TRANSLATIONAL.LEFT.BACK, Ports.DRIVEBASE.ROTATIONAL.LEFT.BACK);
@@ -111,6 +113,12 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
+
+        if (!driving) {
+            rotateToZero();
+            return;
+        }
+
         final double maxTranslatingSpeed = (shooter.isShooting() ? SHOOTING_TRANSLATIONAL_SPEED_COEF
                 : translationalSpeedCoef)
                 * DRIVE_MAX_TRANSLATIONAL_SPEED;
@@ -144,6 +152,13 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 backLeft.getState(), backRight.getState());
 
         log();
+    }
+
+    public void rotateToZero() {
+        frontLeft.setRotatePosition(0);
+        frontRight.setRotatePosition(0);
+        backLeft.setRotatePosition(0);
+        backRight.setRotatePosition(0);
     }
 
     public final boolean isLocked() {

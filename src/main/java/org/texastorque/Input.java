@@ -45,7 +45,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final TorqueTraversableSelection<Double> translationalSpeeds = new TorqueTraversableSelection<Double>(1, .5,
             .6, .7),
             rotationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .75, 1.);
-            
+
     // Incredibly basic solution for inverting the driver controls after an auto routine.
     private double invertCoefficient = 1;
 
@@ -59,7 +59,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 return pid;
             });
 
-    private double lastRotation = drivebase.getGyro().getRotation2d().getDegrees(), xVelo, yVelo, rVelo;
+    private double lastRotation = drivebase.getGyro().getRotation2d().getDegrees(), xVelo, yVelo, rVelo, autoXVelo;
 
     private final TorqueSlewLimiter xLimiter = new TorqueSlewLimiter(5, 10),
             yLimiter = new TorqueSlewLimiter(5, 10);
@@ -67,6 +67,8 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final static double DEADBAND = .04;
 
     private final void updateDrivebase() {
+        drivebase.driving = !operator.getBButton();
+
         SmartDashboard.putNumber("Speed Shifter", (rotationalSpeeds.get() - .5) * 2.);
 
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
@@ -92,20 +94,22 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             return;
         }
 
+        //autoXVelo = (operator.getBButton()) ? 1 : 0; // To test xVelo
+
         xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
                 xLimiter::calculate);
         yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
                 yLimiter::calculate);
         rVelo = rotationRequested;
         drivebase.setSpeeds(new ChassisSpeeds(xVelo, yVelo, rVelo));
-        
+
         SmartDashboard.putNumber("X Velo", xVelo);
         SmartDashboard.putNumber("Y Velo", yVelo);
         SmartDashboard.putNumber("R Velo", rVelo);
+
     }
 
     private final void updateIntake() {
-
         if (driver.getRightTrigger())
             intake.setState(IntakeState.INTAKE);
         else if (driver.getAButton())
@@ -164,16 +168,16 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             shooter.setFlywheelSpeed(1775);
             shooter.setHoodPosition(23);
         } else {
+            //shooter.setState(ShooterState.OFF);
             shooter.setState(ShooterState.OFF);
-            //shooter.setState(ShooterState.IDLE);
         }
     }
 
     private final void updateClimber() {
-        if (operator.getYButton() || operator.getAButton()) {
-            climber.setState(ClimberState.MANUAL);
-            climber.setManualLift(operator.getYButton(), operator.getAButton());
-        } else
+        // //if (operator.getYButton() || operator.getAButton()) {
+        //     climber.setState(ClimberState.MANUAL);
+        //     climber.setManualLift(operator.getYButton(), operator.getAButton());
+        // } else
             climber.setState(ClimberState.OFF);
 
     }

@@ -17,8 +17,8 @@ import org.texastorque.Subsystems;
 import org.texastorque.torquelib.base.TorqueMode;
 import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.base.TorqueSubsystemState;
-import org.texastorque.torquelib.control.TorqueDisjointDataRegression;
-import org.texastorque.torquelib.control.TorqueDisjointDataRegression.DisjointData;
+import org.texastorque.torquelib.control.TorqueLookUpTable;
+import org.texastorque.torquelib.control.TorqueLookUpTable.TorqueDisjointData;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueRollingMedian;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
@@ -29,24 +29,21 @@ import org.texastorque.torquelib.util.TorqueUtil;
 public final class Shooter extends TorqueSubsystem implements Subsystems {
     private static volatile Shooter instance;
 
-    public static final double HOOD_MIN = 0, HOOD_MAX = 35, ERROR = 75, FLYWHEEEL_MAX = 3000, FLYWHEEEL_IDLE = .1,
-            FLYWHEEEL_REDUCTION = 5 / 3., CAMERA_HEIGHT = Units.inchesToMeters(41),
+    public static final double HOOD_MIN = 0, HOOD_MAX = 35, ERROR = 50, FLYWHEEEL_MAX = 3000,
+            FLYWHEEEL_REDUCTION = 5 / 3., CAMERA_HEIGHT = Units.inchesToMeters(41), HUB_RADIUS = .6778625,
+            TURRET_RADIUS = Units.inchesToMeters(7.2),
             TARGET_HEIGHT = 2.6416;
-
-    public static final double HUB_RADIUS = .6778625;
-
-    public static final double TURRET_RADIUS = Units.inchesToMeters(7.2);
 
     public static final Rotation2d CAMERA_ANGLE = Rotation2d.fromDegrees(30);
 
-    public static final Translation2d HUB_CENTER_POSITION = new Translation2d(8.2, 4.1);
+    public static final Translation2d HUB_CENTER_POSITION = new Translation2d(8.2, 4.1),
+            CAMERA_TO_ROBOT = new Translation2d(Units.inchesToMeters(2), CAMERA_HEIGHT);
 
     public static final Pose2d HUB_ORIGIN = new Pose2d(HUB_CENTER_POSITION.getX(),
             HUB_CENTER_POSITION.getY(), new Rotation2d());
 
-    public static final Translation2d CAMERA_TO_ROBOT = new Translation2d(Units.inchesToMeters(2), CAMERA_HEIGHT);
-
-    public static TorqueDisjointDataRegression disjointData;
+    public static TorqueLookUpTable disjointData;
+    public static TorqueDisjointData data;
     public static TorqueRollingMedian rollingMedian = new TorqueRollingMedian(10);
 
     public enum ShooterState implements TorqueSubsystemState {
@@ -86,16 +83,17 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         hood.configurePositionalCANFrame();
         hood.burnFlash();
 
-        disjointData = new TorqueDisjointDataRegression();
-        disjointData.addDisjointData(disjointData.new DisjointData(4, 20, 1800));
-        disjointData.addDisjointData(disjointData.new DisjointData(5, 25, 2000));
-        disjointData.addDisjointData(disjointData.new DisjointData(4.7, 25, 2000));
-        disjointData.addDisjointData(disjointData.new DisjointData(3.6, 25, 1700));
-        disjointData.addDisjointData(disjointData.new DisjointData(2.7, 20, 1700));
-        disjointData.addDisjointData(disjointData.new DisjointData(3.8, 25, 1750));
-        disjointData.addDisjointData(disjointData.new DisjointData(6.4, 35, 2500));
-        disjointData.addDisjointData(disjointData.new DisjointData(5.4, 35, 2350));
-        disjointData.addDisjointData(disjointData.new DisjointData(4.4, 30, 2000));
+        disjointData = new TorqueLookUpTable();
+        disjointData.addDisjointData(disjointData.new TorqueDisjointData(2.7, 20, 1700));
+        disjointData.addDisjointData(disjointData.new TorqueDisjointData(3, 20, 1800));
+        disjointData.addDisjointData(disjointData.new TorqueDisjointData(3.6, 25, 1700));
+        disjointData.addDisjointData(disjointData.new TorqueDisjointData(3.8, 25, 1750));
+        disjointData.addDisjointData(disjointData.new TorqueDisjointData(4., 20, 1800));
+        disjointData.addDisjointData(disjointData.new TorqueDisjointData(4.4, 30, 2000));
+        disjointData.addDisjointData(disjointData.new TorqueDisjointData(4.7, 25, 2000));
+        disjointData.addDisjointData(disjointData.new TorqueDisjointData(5., 25, 2150));
+        disjointData.addDisjointData(disjointData.new TorqueDisjointData(5.4, 35, 2350));
+        disjointData.addDisjointData(disjointData.new TorqueDisjointData(6.4, 35, 2500));
     }
 
     public final void setState(final ShooterState state) {
@@ -126,7 +124,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     @Override
     public final void update(final TorqueMode mode) {
         distance = TorqueMath.round(distance, 1);
-        DisjointData data = disjointData.calculate(distance);
+        data = disjointData.calculate(distance);
 
         camera.update();
 
@@ -139,8 +137,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
             hoodSetpoint = data.getHood();
         } else if (state == ShooterState.DISTANCE) {
         } else if (state == ShooterState.IDLE) {
-            flywheelLeft.setVelocityRPM(200);
-            flywheelLeft.setVoltage(-flywheelLeft.getVoltage());
         } else if (state == ShooterState.OFF) {
             flywheelSpeed = 0;
             flywheelLeft.setPercent(0);
@@ -157,18 +153,14 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         TorqueSubsystemState.logState(state);
 
         SmartDashboard.putNumber("Left Flywheel Real", flywheelLeft.getVelocityRPM() / FLYWHEEEL_REDUCTION);
-        SmartDashboard.putNumber("Right Flywheel Real", flywheelRight.getVelocityRPM() / FLYWHEEEL_REDUCTION);
-
         SmartDashboard.putNumber("Flywheel Req", flywheelSpeed);
         SmartDashboard.putNumber("Hood Req", hoodSetpoint);
-        SmartDashboard.putNumber("Distance", getDistance());
 
-        SmartDashboard.putNumber("Distance From Lookup Table", data.getDistance());
+        SmartDashboard.putNumber("Distance", distance);
+        SmartDashboard.putNumber("Distance From Table", data.getDistance());
         SmartDashboard.putNumber("Far Lookup Distance", data.getHighestPoint());
         SmartDashboard.putNumber("Close Lookup Distance", data.getLowestPoint());
 
-        SmartDashboard.putNumber("Flywheel Delta", flywheelSpeed - flywheelLeft.getVelocityRPM() / FLYWHEEEL_REDUCTION);
-        SmartDashboard.putBoolean("Is Shooting", isShooting());
         SmartDashboard.putBoolean("Is Ready", isReady());
     }
 
@@ -181,7 +173,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
     }
 
     private final double clampRPM(final double rpm) {
-        return TorqueMath.constrain(rpm, FLYWHEEEL_IDLE, FLYWHEEEL_MAX);
+        return TorqueMath.constrain(rpm, 0, FLYWHEEEL_MAX);
     }
 
     private final double clampHood(final double hood) {
