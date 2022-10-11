@@ -113,7 +113,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-
         if (!driving) {
             rotateToZero();
             return;

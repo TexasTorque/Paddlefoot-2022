@@ -12,7 +12,6 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.texastorque.subsystems.Shooter;
 import org.texastorque.subsystems.Climber.ClimberState;
 import org.texastorque.subsystems.Intake.IntakeState;
-import org.texastorque.subsystems.Magazine;
 import org.texastorque.subsystems.Shooter.ShooterState;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueInput;
@@ -46,7 +45,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             .6, .7),
             rotationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .75, 1.);
 
-    // Incredibly basic solution for inverting the driver controls after an auto routine.
     private double invertCoefficient = 1;
 
     public final void invertDrivebaseControls() {
@@ -59,12 +57,14 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 return pid;
             });
 
-    private double lastRotation = drivebase.getGyro().getRotation2d().getDegrees(), xVelo, yVelo, rVelo, autoXVelo;
+    private TorquePID alignPID = TorquePID.create(1).build();
+
+    private double lastRotation = drivebase.getGyro().getRotation2d().getDegrees(), xVelo, yVelo, rVelo;
 
     private final TorqueSlewLimiter xLimiter = new TorqueSlewLimiter(5, 10),
             yLimiter = new TorqueSlewLimiter(5, 10);
 
-    private final static double DEADBAND = .04;
+    private final static double DEADBAND = .04, LENGTH_OF_HOOK = 5, HOLE1 = 10, HOLE2 = 20, HOLE3 = 70, HOLE4 = 100;
 
     private final void updateDrivebase() {
         drivebase.driving = !operator.getBButton();
@@ -87,17 +87,21 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
         final boolean noInput = TorqueMath.toleranced(driver.getLeftYAxis(), DEADBAND)
                 && TorqueMath.toleranced(driver.getLeftXAxis(), DEADBAND)
-                && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND);
+                && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND)
+                && !driver.getYButton();
 
         if (noInput) {
             drivebase.setSpeeds(new ChassisSpeeds(0, 0, 0));
             return;
         }
 
-        //autoXVelo = (operator.getBButton()) ? 1 : 0; // To test xVelo
+        if (driver.getYButton()) {
+            xVelo = alignPID.calculate(shooter.getTargetOffset(), 0);
+        } else {
+            xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
+                    xLimiter::calculate);
+        }
 
-        xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
-                xLimiter::calculate);
         yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
                 yLimiter::calculate);
         rVelo = rotationRequested;
@@ -106,7 +110,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         SmartDashboard.putNumber("X Velo", xVelo);
         SmartDashboard.putNumber("Y Velo", yVelo);
         SmartDashboard.putNumber("R Velo", rVelo);
-
     }
 
     private final void updateIntake() {
@@ -124,12 +127,12 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
     private final void updateManualMagazineBeltControls(final GenericController controller) {
-        if (controller.getRightTrigger())
-            magazine.setBeltDirection(Magazine.MAG_UP);
-        else if (controller.getLeftTrigger())
-            magazine.setBeltDirection(Magazine.MAG_DOWN);
-        else
-            magazine.setBeltDirection(TorqueDirection.OFF);
+        // if (controller.getRightTrigger())
+        //     magazine.setBeltDirection(Magazine.MAG_UP);
+        // else if (controller.getLeftTrigger())
+        //     magazine.setBeltDirection(Magazine.MAG_DOWN);
+        // else
+        magazine.setBeltDirection(TorqueDirection.OFF);
     }
 
     private final void updateManualMagazineGateControls(final GenericController controller) {
@@ -152,34 +155,27 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         SmartDashboard.putNumber("IRPM", flywheelRPM.getSpeed());
         SmartDashboard.putNumber("IHOOD", hoodSetpoint.getSpeed());
 
-        // This is debugging for the regression
         if (operator.getXButton()) {
             shooter.setState(ShooterState.SETPOINT);
             shooter.setFlywheelSpeed(flywheelRPM.getSpeed());
             shooter.setHoodPosition(hoodSetpoint.getSpeed());
         } else if (driver.getLeftTrigger()) {
             shooter.setState(ShooterState.REGRESSION);
-        } else if (driver.getYButton()) {
-            shooter.setState(ShooterState.DISTANCE);
-            shooter.setFlywheelSpeed(2000);
-            shooter.setHoodPosition(25);
-        } else if (driver.getXButton()) {
-            shooter.setState(ShooterState.DISTANCE);
-            shooter.setFlywheelSpeed(1775);
-            shooter.setHoodPosition(23);
         } else {
-            //shooter.setState(ShooterState.OFF);
             shooter.setState(ShooterState.OFF);
         }
     }
 
-    private final void updateClimber() {
-        // //if (operator.getYButton() || operator.getAButton()) {
-        //     climber.setState(ClimberState.MANUAL);
-        //     climber.setManualLift(operator.getYButton(), operator.getAButton());
-        // } else
-            climber.setState(ClimberState.OFF);
+    private TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(HOLE1, HOLE2, HOLE3,
+            HOLE4);
 
+    private final void updateClimber() {
+        climber.setState(ClimberState.MANUAL);
+        elevatorPos.calculate(driver.getDPADDown(), driver.getDPADUp());
+        if (driver.getDPADLeft())
+            climber.setLiftPos(elevatorPos.get() - LENGTH_OF_HOOK);
+        if (!driver.getDPADLeft())
+            climber.setLiftPos(elevatorPos.get());
     }
 
     public static final synchronized Input getInstance() {

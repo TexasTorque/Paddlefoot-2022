@@ -19,9 +19,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public final class Climber extends TorqueSubsystem implements Subsystems {
     private static volatile Climber instance;
 
-    public static double LIFT_UP = 108, LIFT_BOTTOM = 0, LIFT_MULTIPLIER = .8;
+    public static double LIFT_UP = 108, LIFT_BOTTOM = 0, LIFT_MULTIPLIER = .8, liftPos;
 
-    // The right climber is set as a follower via Rev Hardware Client
     private final TorqueSparkMax lift, lift2;
 
     private ClimberState state = ClimberState.OFF;
@@ -37,20 +36,11 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
 
     private TorqueDirection liftDirection = TorqueDirection.OFF;
 
-    public final void setManualLift(final boolean liftUp, final boolean liftDown) {
-        if (liftUp)
-            liftDirection = TorqueDirection.FORWARD;
-        else if (liftDown)
-            liftDirection = TorqueDirection.REVERSE;
-        else
-            liftDirection = TorqueDirection.NEUTRAL;
-    }
-
     private Climber() {
         lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.RIGHT);
         lift2 = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
-        lift.configurePID(TorquePID.create(.02).build());
-        lift2.configurePID(TorquePID.create(.02).build());
+        lift.configurePID(TorquePID.create(.2).build());
+        lift2.configurePID(TorquePID.create(.2).build());
     }
 
     @Override
@@ -63,6 +53,19 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         lift2.setPercent(0);
     }
 
+    public final void setManualLift(final boolean liftUp, final boolean liftDown) {
+        if (liftUp)
+            liftDirection = TorqueDirection.FORWARD;
+        else if (liftDown)
+            liftDirection = TorqueDirection.REVERSE;
+        else
+            liftDirection = TorqueDirection.NEUTRAL;
+    }
+
+    public void setLiftPos(double position) {
+        liftPos = position;
+    }
+
     @Override
     public final void update(final TorqueMode mode) {
 
@@ -71,9 +74,9 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Climber State", state.toString());
 
         if (state == ClimberState.MANUAL) {
-            lift.setPercent(TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
+            lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
                     * LIFT_MULTIPLIER);
-            lift2.setPercent(-TorqueMath.linearConstraint(liftDirection.get(), lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
+            lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
                     * LIFT_MULTIPLIER);
         } else if (state == ClimberState.RETRACT) {
             lift.setPosition(LIFT_BOTTOM);

@@ -50,7 +50,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         OFF,
         REGRESSION,
         SETPOINT,
-        DISTANCE,
         IDLE;
 
         public final boolean isShooting() {
@@ -135,7 +134,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
             distance = getDistance();
             flywheelSpeed = data.getRPM() + (mode.isAuto() ? autoOffset : 0);
             hoodSetpoint = data.getHood();
-        } else if (state == ShooterState.DISTANCE) {
+
         } else if (state == ShooterState.IDLE) {
         } else if (state == ShooterState.OFF) {
             flywheelSpeed = 0;
