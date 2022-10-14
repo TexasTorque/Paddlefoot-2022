@@ -90,22 +90,27 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND)
                 && !driver.getYButton();
 
-        if (noInput) {
-            drivebase.setSpeeds(new ChassisSpeeds(0, 0, 0));
-            return;
-        }
+        if (driver.getYButton())
+            drivebase.setAlignToRocket(true);
+        else
+            drivebase.setAlignToRocket(false);
 
-        if (driver.getYButton()) {
-            xVelo = alignPID.calculate(shooter.getTargetOffset(), 0);
-        } else {
-            xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
-                    xLimiter::calculate);
-        }
+        if (driver.getXButton())
+            drivebase.setTest(true);
+        else
+            drivebase.setTest(false);
 
+        xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
+                xLimiter::calculate);
         yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
                 yLimiter::calculate);
         rVelo = rotationRequested;
         drivebase.setSpeeds(new ChassisSpeeds(xVelo, yVelo, rVelo));
+
+        if (noInput && !driver.getYButton()) {
+            drivebase.setSpeeds(new ChassisSpeeds(0, 0, 0));
+            return;
+        }
 
         SmartDashboard.putNumber("X Velo", xVelo);
         SmartDashboard.putNumber("Y Velo", yVelo);

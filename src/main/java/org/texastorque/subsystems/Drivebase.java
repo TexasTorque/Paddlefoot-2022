@@ -6,12 +6,17 @@
  */
 package org.texastorque.subsystems;
 
+import edu.wpi.first.math.controller.HolonomicDriveController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.Trajectory;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.texastorque.Ports;
@@ -35,10 +40,10 @@ import org.texastorque.torquelib.util.TorqueSwerveOdometry;
 public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static volatile Drivebase instance;
 
-    public boolean driving = false;
+    public boolean driving = false, test;
 
     public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 25, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 25, // TEST NEW MAX SPEEDS
-            DRIVE_MAX_ROTATIONAL_SPEED = 25 * Math.PI, TOLERANCE = 7;
+            DRIVE_MAX_ROTATIONAL_SPEED = 25 * Math.PI, TOLERANCE = 7, ROCKET_X_OFFSET = 5, ROCKET_Y_OFFSET = 5;
 
     private static final double DRIVE_GEARING = .1875, // Drive rotations per motor rotations
             DRIVE_WHEEL_RADIUS = Units.inchesToMeters(1.788), DISTANCE_TO_CENTER_X = Units.inchesToMeters(10.875),
@@ -48,6 +53,11 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     public static final TorquePID ROTATE_PID = TorquePID.create(.3).build();
 
     public final SimpleMotorFeedforward DRIVE_FEED_FORWARD = new SimpleMotorFeedforward(.27024, 2.4076, .5153);
+
+    public final ProfiledPIDController thetaController;
+    private final HolonomicDriveController controller;
+    private final TorquePID xController = TorquePID.create(1).build();
+    private final TorquePID yController = TorquePID.create(1).build();
 
     private final Translation2d locationBackLeft = new Translation2d(DISTANCE_TO_CENTER_X, -DISTANCE_TO_CENTER_Y),
             locationBackRight = new Translation2d(DISTANCE_TO_CENTER_X, DISTANCE_TO_CENTER_Y),
@@ -67,9 +77,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private double translationalSpeedCoef, rotationalSpeedCoef, offset, targetYaw;
     private final double SHOOTING_TRANSLATIONAL_SPEED_COEF = .4, SHOOTING_ROTATIONAL_SPEED_COEF = .5;
 
-    private boolean shouldTarget = false;
+    private boolean shouldTarget = false, alignToRocket = false;
 
-    // TODO: TUNE THIS!
     private final TorquePID targetPID = TorquePID.create(.6).build();
 
     private Drivebase() {
@@ -86,6 +95,11 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 locationFrontRight);
 
         odometry = new TorqueSwerveOdometry(kinematics, gyro.getRotation2dClockwise());
+
+        thetaController = new ProfiledPIDController(4, 0, 0,
+                new TrapezoidProfile.Constraints(3 * Math.PI, 3 * Math.PI));
+        thetaController.enableContinuousInput(Math.toRadians(-180), Math.toRadians(180));
+        controller = new HolonomicDriveController(xController, yController, thetaController);
 
         reset();
     }
@@ -124,7 +138,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         final double maxRotationalSpeed = (shooter.isShooting() ? SHOOTING_ROTATIONAL_SPEED_COEF : rotationalSpeedCoef)
                 * DRIVE_MAX_ROTATIONAL_SPEED;
 
-        if (mode.isTeleop())
+        if (mode.isTeleop() && !alignToRocket)
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * maxTranslatingSpeed,
                     speeds.vyMetersPerSecond * maxTranslatingSpeed, speeds.omegaRadiansPerSecond * maxRotationalSpeed,
                     gyro.getRotation2dClockwise());
@@ -139,7 +153,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
             speeds.omegaRadiansPerSecond = output;
         }
 
-        swerveModuleStates = kinematics.toSwerveModuleStates(speeds);
+        swerveModuleStates = (alignToRocket ? kinematics.toSwerveModuleStates(alignToRocket())
+                : kinematics.toSwerveModuleStates(speeds));
         SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DRIVE_MAX_TRANSLATIONAL_SPEED);
 
         frontLeft.setDesiredState(swerveModuleStates[0]);
@@ -151,6 +166,28 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 backLeft.getState(), backRight.getState());
 
         log();
+    }
+
+    public ChassisSpeeds alignToRocket() {
+        ChassisSpeeds adjustedSpeeds = controller.calculate(
+                getOdometry().getPoseMeters(), new Pose2d(new Translation2d(.2, .5), new Rotation2d()), 4,
+                Rotation2d.fromDegrees(0));
+        adjustedSpeeds.vxMetersPerSecond *= -1;
+        SmartDashboard.putString("OdometryRocket",
+                String.format("(%f, %f)", getOdometry().getPoseMeters().getX(), getOdometry().getPoseMeters().getY()));
+        SmartDashboard.putString("AdjustedSpeedsRocket", String.format("(%f, %f)", adjustedSpeeds.vxMetersPerSecond,
+                adjustedSpeeds.vyMetersPerSecond));
+        return adjustedSpeeds;
+    }
+
+    public ChassisSpeeds alignWithVision() {
+        double xToRocket = shooter.getDistance() / Math.asin(shooter.getTargetOffset()) + ROCKET_X_OFFSET;
+        double YToRocket = shooter.getDistance() / Math.acos(shooter.getTargetOffset()) + ROCKET_Y_OFFSET;
+
+        ChassisSpeeds adjustedSpeeds = controller.calculate(
+                getOdometry().getPoseMeters(), new Pose2d(new Translation2d(xToRocket, YToRocket), new Rotation2d()), 0,
+                Rotation2d.fromDegrees(0));
+        return adjustedSpeeds;
     }
 
     public void rotateToZero() {
@@ -191,6 +228,9 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Speeds", String.format("(%02.3f, %02.3f, %02.3f)", speeds.vxMetersPerSecond,
                 speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond));
 
+        SmartDashboard.putBoolean("Align to Rocket", alignToRocket);
+        SmartDashboard.putBoolean("Test", test);
+
     }
 
     public final void reset() {
@@ -207,7 +247,15 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         return frontLeft.getDisplacement();
     }
 
+    public void setAlignToRocket(boolean input) {
+        alignToRocket = input;
+    }
+
     public static final synchronized Drivebase getInstance() {
         return instance == null ? instance = new Drivebase() : instance;
+    }
+
+    public void setTest(boolean b) {
+        test = b;
     }
 }
