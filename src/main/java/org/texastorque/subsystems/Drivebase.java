@@ -40,7 +40,7 @@ import org.texastorque.torquelib.util.TorqueSwerveOdometry;
 public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static volatile Drivebase instance;
 
-    public boolean driving = false, test;
+    public boolean driving = false;
 
     public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 25, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 25, // TEST NEW MAX SPEEDS
             DRIVE_MAX_ROTATIONAL_SPEED = 25 * Math.PI, TOLERANCE = 7, ROCKET_X_OFFSET = 5, ROCKET_Y_OFFSET = 5;
@@ -81,7 +81,25 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     private final TorquePID targetPID = TorquePID.create(.6).build();
 
+    public DrivebaseState state;
+
+    public enum DrivebaseState {
+        OFF,
+        DRIVING,
+        ALIGN_TO_ROCKET,
+        ZERO_WHEELS
+    }
+
+    public void setState(DrivebaseState state) {
+        this.state = state;
+    }
+
+    public DrivebaseState getState() {
+        return state;
+    }
+
     private Drivebase() {
+        state = DrivebaseState.OFF;
         backLeft = buildSwerveModule(0, Ports.DRIVEBASE.TRANSLATIONAL.LEFT.BACK, Ports.DRIVEBASE.ROTATIONAL.LEFT.BACK);
         backLeft.setLogging(true);
         backRight = buildSwerveModule(1, Ports.DRIVEBASE.TRANSLATIONAL.RIGHT.BACK,
@@ -127,43 +145,40 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-        if (!driving) {
+        final double maxTranslatingSpeed = translationalSpeedCoef * DRIVE_MAX_TRANSLATIONAL_SPEED;
+        final double maxRotationalSpeed = rotationalSpeedCoef * DRIVE_MAX_ROTATIONAL_SPEED;
+
+        odometry.update(gyro.getRotation2dClockwise().times(-1), frontLeft.getState(), frontRight.getState(),
+                backLeft.getState(), backRight.getState());
+                
+        if (state == DrivebaseState.DRIVING) {
+            if (mode.isTeleop() && !alignToRocket)
+                speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * maxTranslatingSpeed,
+                        speeds.vyMetersPerSecond * maxTranslatingSpeed,
+                        speeds.omegaRadiansPerSecond * maxRotationalSpeed,
+                        gyro.getRotation2dClockwise());
+
+            if (shooter.isShooting() && shouldTarget && !mode.isAuto()) {
+                SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
+                offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5);
+                speeds.omegaRadiansPerSecond = -targetPID.calculate(-shooter.getTargetOffset(), offset);
+            }
+
+            swerveModuleStates = (alignToRocket ? kinematics.toSwerveModuleStates(alignToRocket())
+                    : kinematics.toSwerveModuleStates(speeds));
+            SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DRIVE_MAX_TRANSLATIONAL_SPEED);
+
+        } else if (state == DrivebaseState.ZERO_WHEELS) {
             rotateToZero();
             return;
+        } else {
+            speeds = new ChassisSpeeds(0, 0, 0);
         }
-
-        final double maxTranslatingSpeed = (shooter.isShooting() ? SHOOTING_TRANSLATIONAL_SPEED_COEF
-                : translationalSpeedCoef)
-                * DRIVE_MAX_TRANSLATIONAL_SPEED;
-        final double maxRotationalSpeed = (shooter.isShooting() ? SHOOTING_ROTATIONAL_SPEED_COEF : rotationalSpeedCoef)
-                * DRIVE_MAX_ROTATIONAL_SPEED;
-
-        if (mode.isTeleop() && !alignToRocket)
-            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * maxTranslatingSpeed,
-                    speeds.vyMetersPerSecond * maxTranslatingSpeed, speeds.omegaRadiansPerSecond * maxRotationalSpeed,
-                    gyro.getRotation2dClockwise());
-
-        if (shooter.isShooting() && shouldTarget && !mode.isAuto()) {
-            SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
-            offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5) * 1.;
-            targetYaw = shooter.getTargetOffset();
-            SmartDashboard.putNumber("Targeting Yaw", targetYaw);
-            final double output = -targetPID.calculate(-targetYaw, offset);
-            SmartDashboard.putNumber("Locking PID output", output);
-            speeds.omegaRadiansPerSecond = output;
-        }
-
-        swerveModuleStates = (alignToRocket ? kinematics.toSwerveModuleStates(alignToRocket())
-                : kinematics.toSwerveModuleStates(speeds));
-        SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DRIVE_MAX_TRANSLATIONAL_SPEED);
 
         frontLeft.setDesiredState(swerveModuleStates[0]);
         frontRight.setDesiredState(swerveModuleStates[1]);
         backLeft.setDesiredState(swerveModuleStates[2]);
         backRight.setDesiredState(swerveModuleStates[3]);
-
-        odometry.update(gyro.getRotation2dClockwise().times(-1), frontLeft.getState(), frontRight.getState(),
-                backLeft.getState(), backRight.getState());
 
         log();
     }
@@ -229,8 +244,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond));
 
         SmartDashboard.putBoolean("Align to Rocket", alignToRocket);
-        SmartDashboard.putBoolean("Test", test);
-
     }
 
     public final void reset() {
@@ -253,9 +266,5 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     public static final synchronized Drivebase getInstance() {
         return instance == null ? instance = new Drivebase() : instance;
-    }
-
-    public void setTest(boolean b) {
-        test = b;
     }
 }

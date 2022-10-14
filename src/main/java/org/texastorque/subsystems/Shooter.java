@@ -161,6 +161,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putNumber("Close Lookup Distance", data.getLowestPoint());
 
         SmartDashboard.putBoolean("Is Ready", isReady());
+        SmartDashboard.putNumber("Target Offset", getTargetOffset());
     }
 
     public final boolean isShooting() {

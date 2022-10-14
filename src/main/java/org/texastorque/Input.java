@@ -11,7 +11,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.texastorque.subsystems.Shooter;
 import org.texastorque.subsystems.Climber.ClimberState;
+import org.texastorque.subsystems.Drivebase.DrivebaseState;
 import org.texastorque.subsystems.Intake.IntakeState;
+import org.texastorque.subsystems.Magazine;
 import org.texastorque.subsystems.Shooter.ShooterState;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueInput;
@@ -57,8 +59,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 return pid;
             });
 
-    private TorquePID alignPID = TorquePID.create(1).build();
-
     private double lastRotation = drivebase.getGyro().getRotation2d().getDegrees(), xVelo, yVelo, rVelo;
 
     private final TorqueSlewLimiter xLimiter = new TorqueSlewLimiter(5, 10),
@@ -67,9 +67,10 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final static double DEADBAND = .04, LENGTH_OF_HOOK = 5, HOLE1 = 10, HOLE2 = 20, HOLE3 = 70, HOLE4 = 100;
 
     private final void updateDrivebase() {
-        drivebase.driving = !operator.getBButton();
+        if (driver.getLeftCenterButton())
+            drivebase.setState(DrivebaseState.ZERO_WHEELS);
 
-        SmartDashboard.putNumber("Speed Shifter", (rotationalSpeeds.get() - .5) * 2.);
+        drivebase.setAlignToRocket(driver.getYButton());
 
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
         double rotationRequested = -driver.getRightXAxis();
@@ -79,9 +80,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         else
             lastRotation = rotationReal;
 
-        SmartDashboard.putNumber("PID O", rotationRequested);
-        SmartDashboard.putNumber("Rot Delta", rotationReal - lastRotation);
-
         drivebase.setSpeedCoefs(translationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()),
                 rotationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()));
 
@@ -90,15 +88,10 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND)
                 && !driver.getYButton();
 
-        if (driver.getYButton())
-            drivebase.setAlignToRocket(true);
-        else
-            drivebase.setAlignToRocket(false);
-
-        if (driver.getXButton())
-            drivebase.setTest(true);
-        else
-            drivebase.setTest(false);
+        if (noInput && !driver.getYButton()) {
+            drivebase.setState(DrivebaseState.OFF);
+            return;
+        }
 
         xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
                 xLimiter::calculate);
@@ -107,14 +100,12 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         rVelo = rotationRequested;
         drivebase.setSpeeds(new ChassisSpeeds(xVelo, yVelo, rVelo));
 
-        if (noInput && !driver.getYButton()) {
-            drivebase.setSpeeds(new ChassisSpeeds(0, 0, 0));
-            return;
-        }
-
         SmartDashboard.putNumber("X Velo", xVelo);
         SmartDashboard.putNumber("Y Velo", yVelo);
         SmartDashboard.putNumber("R Velo", rVelo);
+        SmartDashboard.putNumber("Speed Shifter", (rotationalSpeeds.get() - .5) * 2.);
+        SmartDashboard.putNumber("PID O", rotationRequested);
+        SmartDashboard.putNumber("Rot Delta", rotationReal - lastRotation);
     }
 
     private final void updateIntake() {
@@ -127,16 +118,16 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
     private final void updateMagazine() {
-        updateManualMagazineBeltControls(operator);
-        updateManualMagazineGateControls(operator);
+        //updateManualMagazineBeltControls(operator);
+        //updateManualMagazineGateControls(operator);
     }
 
     private final void updateManualMagazineBeltControls(final GenericController controller) {
-        // if (controller.getRightTrigger())
-        //     magazine.setBeltDirection(Magazine.MAG_UP);
-        // else if (controller.getLeftTrigger())
-        //     magazine.setBeltDirection(Magazine.MAG_DOWN);
-        // else
+        if (controller.getRightTrigger())
+            magazine.setBeltDirection(Magazine.MAG_UP);
+        else if (controller.getLeftTrigger())
+            magazine.setBeltDirection(magazine.MAG_DOWN);
+        else
         magazine.setBeltDirection(TorqueDirection.OFF);
     }
 
@@ -171,7 +162,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         }
     }
 
-    private TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(HOLE1, HOLE2, HOLE3,
+    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(HOLE1, HOLE2, HOLE3,
             HOLE4);
 
     private final void updateClimber() {
