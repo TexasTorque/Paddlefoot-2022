@@ -7,6 +7,9 @@
 package org.texastorque;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.texastorque.subsystems.Shooter;
@@ -17,6 +20,7 @@ import org.texastorque.subsystems.Magazine;
 import org.texastorque.subsystems.Shooter.ShooterState;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueInput;
+import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueSlewLimiter;
 import org.texastorque.torquelib.control.TorqueTraversableRange;
@@ -59,6 +63,8 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 return pid;
             });
 
+    private final TorqueClick translate = new TorqueClick();
+
     private double lastRotation = drivebase.getGyro().getRotation2d().getDegrees(), xVelo, yVelo, rVelo;
 
     private final TorqueSlewLimiter xLimiter = new TorqueSlewLimiter(5, 10),
@@ -77,6 +83,12 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 && TorqueMath.toleranced(driver.getLeftXAxis(), DEADBAND)
                 && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND)
                 && !driver.getYButton();
+
+        if (translate.calculate(driver.getYButton())) {
+            final var trans = new Translation2d(3, 4);
+            drivebase.setDesiredPosition(new Pose2d(drivebase.getPose().getTranslation().plus(trans),
+                    Rotation2d.fromDegrees(0)));
+        }
 
         if (noInput && !driver.getYButton() && !driver.getLeftCenterButton())
             drivebase.setState(DrivebaseState.OFF);

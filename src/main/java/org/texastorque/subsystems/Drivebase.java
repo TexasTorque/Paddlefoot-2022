@@ -59,6 +59,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private final TorquePID xController = TorquePID.create(8).build();
     private final TorquePID yController = TorquePID.create(8).build();
 
+    private Pose2d desired = new Pose2d(0, 0, Rotation2d.fromDegrees(0));
+
     private final Translation2d locationBackLeft = new Translation2d(DISTANCE_TO_CENTER_X, -DISTANCE_TO_CENTER_Y),
             locationBackRight = new Translation2d(DISTANCE_TO_CENTER_X, DISTANCE_TO_CENTER_Y),
             locationFrontLeft = new Translation2d(-DISTANCE_TO_CENTER_X, -DISTANCE_TO_CENTER_Y),
@@ -186,7 +188,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     public ChassisSpeeds alignToRocket() {
         ChassisSpeeds adjustedSpeeds = controller.calculate(
-                getOdometry().getPoseMeters(), new Pose2d(new Translation2d(3, 1), new Rotation2d()), 0, 
+                getOdometry().getPoseMeters(), desired, 0,
                 Rotation2d.fromDegrees(0));
         adjustedSpeeds.vxMetersPerSecond *= -1;
         SmartDashboard.putString("OdometryRocket",
@@ -245,6 +247,10 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond));
 
         SmartDashboard.putString("Drivebase State", state.toString());
+
+        SmartDashboard.putNumber("Desired X", desired.getX());
+        SmartDashboard.putNumber("Desired Y", desired.getY());
+        SmartDashboard.putNumber("Desired Rotation", desired.getRotation().getDegrees());
     }
 
     public final void reset() {
@@ -259,6 +265,14 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     public final double getDisplacement() {
         return frontLeft.getDisplacement();
+    }
+
+    public void setDesiredPosition(final Pose2d desired) {
+        this.desired = desired;
+    }
+
+    public Pose2d getDesired() {
+        return desired;
     }
 
     public static final synchronized Drivebase getInstance() {
