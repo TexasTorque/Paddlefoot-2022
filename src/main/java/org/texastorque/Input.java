@@ -59,8 +59,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 return pid;
             });
 
-    private final TorquePID xController = TorquePID.create(1).build();
-
     private double lastRotation = drivebase.getGyro().getRotation2d().getDegrees(), xVelo, yVelo, rVelo;
 
     private final TorqueSlewLimiter xLimiter = new TorqueSlewLimiter(5, 10),
@@ -72,11 +70,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
         double rotationRequested = -driver.getRightXAxis();
 
-        if (rotationRequested == 0)
-            rotationRequested = -rotationPID.calculate(rotationReal, lastRotation);
-        else
-            lastRotation = rotationReal;
-
         drivebase.setSpeedCoefs(translationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()),
                 rotationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()));
 
@@ -85,22 +78,27 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND)
                 && !driver.getYButton();
 
-        if (noInput && !driver.getXButton() && !driver.getYButton() && !driver.getLeftCenterButton())
+        if (noInput && !driver.getYButton() && !driver.getLeftCenterButton())
             drivebase.setState(DrivebaseState.OFF);
         else if (driver.getLeftCenterButton())
             drivebase.setState(DrivebaseState.ZERO_WHEELS);
         else if (driver.getYButton())
             drivebase.setState(DrivebaseState.ALIGN_TO_ROCKET);
-        else if (driver.getXButton())
-            xVelo = xController.calculate(drivebase.getOdometry().getPoseMeters().getX(), 5);
         else {
             drivebase.setState(DrivebaseState.DRIVING);
-            xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
-                    xLimiter::calculate);
-        }
 
-        yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
-                yLimiter::calculate);
+            if (rotationRequested == 0)
+                rotationRequested = -rotationPID.calculate(rotationReal, lastRotation);
+            else
+                lastRotation = rotationReal;
+
+            yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
+                    yLimiter::calculate);
+
+        }
+        xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
+                xLimiter::calculate);
+
         rVelo = rotationRequested;
 
         drivebase.setSpeeds(new ChassisSpeeds(xVelo, yVelo, rVelo));

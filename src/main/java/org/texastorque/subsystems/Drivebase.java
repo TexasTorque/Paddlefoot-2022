@@ -55,8 +55,9 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     public final ProfiledPIDController thetaController;
     private final HolonomicDriveController controller;
-    private final TorquePID drivebaseXController = TorquePID.create(1).build();
-    private final TorquePID yController = TorquePID.create(1).build();
+
+    private final TorquePID xController = TorquePID.create(8).build();
+    private final TorquePID yController = TorquePID.create(8).build();
 
     private final Translation2d locationBackLeft = new Translation2d(DISTANCE_TO_CENTER_X, -DISTANCE_TO_CENTER_Y),
             locationBackRight = new Translation2d(DISTANCE_TO_CENTER_X, DISTANCE_TO_CENTER_Y),
@@ -75,7 +76,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     private double translationalSpeedCoef, rotationalSpeedCoef, offset;
 
-    private boolean shouldTarget = false, alignToRocket = false;
+    private boolean shouldTarget = false;
 
     private final TorquePID targetPID = TorquePID.create(.6).build();;
 
@@ -115,7 +116,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         thetaController = new ProfiledPIDController(4, 0, 0,
                 new TrapezoidProfile.Constraints(3 * Math.PI, 3 * Math.PI));
         thetaController.enableContinuousInput(Math.toRadians(-180), Math.toRadians(180));
-        controller = new HolonomicDriveController(drivebaseXController, yController, thetaController);
+        controller = new HolonomicDriveController(xController, yController, thetaController);
 
         reset();
     }
@@ -150,7 +151,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 backLeft.getState(), backRight.getState());
 
         if (state == DrivebaseState.DRIVING) {
-            if (mode.isTeleop() && !alignToRocket)
+            if (mode.isTeleop())
                 speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * maxTranslatingSpeed,
                         speeds.vyMetersPerSecond * maxTranslatingSpeed,
                         speeds.omegaRadiansPerSecond * maxRotationalSpeed,
@@ -169,7 +170,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         }
 
         if (state != DrivebaseState.ZERO_WHEELS) {
-            swerveModuleStates = (alignToRocket ? kinematics.toSwerveModuleStates(alignToRocket())
+            swerveModuleStates = (state == DrivebaseState.ALIGN_TO_ROCKET
+                    ? kinematics.toSwerveModuleStates(alignToRocket())
                     : kinematics.toSwerveModuleStates(speeds));
             SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DRIVE_MAX_TRANSLATIONAL_SPEED);
 
@@ -184,7 +186,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     public ChassisSpeeds alignToRocket() {
         ChassisSpeeds adjustedSpeeds = controller.calculate(
-                getOdometry().getPoseMeters(), new Pose2d(new Translation2d(.2, .5), new Rotation2d()), 4,
+                getOdometry().getPoseMeters(), new Pose2d(new Translation2d(3, 1), new Rotation2d()), 0, 
                 Rotation2d.fromDegrees(0));
         adjustedSpeeds.vxMetersPerSecond *= -1;
         SmartDashboard.putString("OdometryRocket",
@@ -242,7 +244,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Speeds", String.format("(%02.3f, %02.3f, %02.3f)", speeds.vxMetersPerSecond,
                 speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond));
 
-        SmartDashboard.putBoolean("Align to Rocket", alignToRocket);
         SmartDashboard.putString("Drivebase State", state.toString());
     }
 
@@ -258,10 +259,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     public final double getDisplacement() {
         return frontLeft.getDisplacement();
-    }
-
-    public void setAlignToRocket(boolean input) {
-        alignToRocket = input;
     }
 
     public static final synchronized Drivebase getInstance() {
