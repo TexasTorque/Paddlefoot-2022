@@ -104,13 +104,12 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             else
                 lastRotation = rotationReal;
 
-            yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
-                    yLimiter::calculate);
-
         }
+        
+        yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
+                yLimiter::calculate);
         xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
                 xLimiter::calculate);
-
         rVelo = rotationRequested;
 
         drivebase.setSpeeds(new ChassisSpeeds(xVelo, yVelo, rVelo));
@@ -135,13 +134,15 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final void updateMagazine() {
         //updateManualMagazineBeltControls(operator);
         //updateManualMagazineGateControls(operator);
+        magazine.setBeltDirection(TorqueDirection.OFF);
+        magazine.setGateDirection(TorqueDirection.OFF);
     }
 
     private final void updateManualMagazineBeltControls(final GenericController controller) {
         if (controller.getRightTrigger())
             magazine.setBeltDirection(Magazine.MAG_UP);
         else if (controller.getLeftTrigger())
-            magazine.setBeltDirection(magazine.MAG_DOWN);
+            magazine.setBeltDirection(Magazine.MAG_DOWN);
         else
             magazine.setBeltDirection(TorqueDirection.OFF);
     }
@@ -177,7 +178,8 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         }
     }
 
-    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(HOLE1, HOLE2,
+    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0, HOLE1,
+            HOLE2,
             HOLE3,
             HOLE4);
 
@@ -186,7 +188,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         elevatorPos.calculate(driver.getDPADDown(), driver.getDPADUp());
         if (driver.getDPADLeft())
             climber.setLiftPos(elevatorPos.get() - LENGTH_OF_HOOK);
-        if (!driver.getDPADLeft())
+        else
             climber.setLiftPos(elevatorPos.get());
     }
 

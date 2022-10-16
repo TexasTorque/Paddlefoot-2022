@@ -166,7 +166,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
             }
 
         } else if (state == DrivebaseState.ZERO_WHEELS) {
-            rotateToZero();
+            zeroWheels();
         } else {
             speeds = new ChassisSpeeds(0, 0, 0);
         }
@@ -191,10 +191,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 getOdometry().getPoseMeters(), desired, 0,
                 Rotation2d.fromDegrees(0));
         adjustedSpeeds.vxMetersPerSecond *= -1;
-        SmartDashboard.putString("OdometryRocket",
-                String.format("(%f, %f)", getOdometry().getPoseMeters().getX(), getOdometry().getPoseMeters().getY()));
-        SmartDashboard.putString("AdjustedSpeedsRocket", String.format("(%f, %f)", adjustedSpeeds.vxMetersPerSecond,
-                adjustedSpeeds.vyMetersPerSecond));
         return adjustedSpeeds;
     }
 
@@ -208,7 +204,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         return adjustedSpeeds;
     }
 
-    public void rotateToZero() {
+    public void zeroWheels() {
         frontLeft.setRotatePosition(0);
         frontRight.setRotatePosition(0);
         backLeft.setRotatePosition(0);
