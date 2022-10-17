@@ -6,97 +6,108 @@
  */
 package org.texastorque.subsystems;
 
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.texastorque.Ports;
 import org.texastorque.Subsystems;
 import org.texastorque.torquelib.base.TorqueMode;
 import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.base.TorqueSubsystemState;
-import org.texastorque.torquelib.control.TorquePersistentBoolean;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
 import org.texastorque.torquelib.base.TorqueDirection;
+import org.texastorque.torquelib.control.TorquePID;
+import org.texastorque.torquelib.util.TorqueMath;
 
 public final class Magazine extends TorqueSubsystem implements Subsystems {
     private static volatile Magazine instance;
 
-    public static final TorqueDirection MAG_UP = TorqueDirection.REVERSE, MAG_DOWN = TorqueDirection.FORWARD;
-
-    private final TorqueSparkMax belt, gate;
-    private TorqueDirection beltDirection, gateDirection;
-
+    public static enum MagazineState {
+        OFF,
+        OUT,
+        IDLE,
+        POP_MINS;
+    }
+    public static final double FLYWHEEEL_MAX = 3000;
+    private final TorqueSparkMax belt, gate, hood, flywheelLeft, flywheelRight;
+    public TorqueDirection beltDirection, gateDirection;
+    public MagazineState state;
+    
     private Magazine() {
         belt = new TorqueSparkMax(Ports.MAGAZINE.BELT);
         belt.configureDumbCANFrame();
         gate = new TorqueSparkMax(Ports.MAGAZINE.GATE);
         gate.configureDumbCANFrame();
+
+        state = MagazineState.OFF;
+        beltDirection = TorqueDirection.OFF;
+        gateDirection = TorqueDirection.OFF;
+
+        // Stuff from shooter
+        flywheelLeft = new TorqueSparkMax(Ports.SHOOTER.FLYWHEEL.LEFT);
+        flywheelRight = new TorqueSparkMax(Ports.SHOOTER.FLYWHEEL.RIGHT);
+        flywheelLeft.configurePID(TorquePID.create(.000005).addFeedForward(.00034).setTolerance(20).build());
+        hood = new TorqueSparkMax(Ports.SHOOTER.HOOD);
+                hood.configurePID(TorquePID.create(.1)
+                .addIntegral(.001)
+                .addOutputRange(-.7, .7)
+                .addIntegralZone(.3)
+                .build());
+
+        hood.configurePositionalCANFrame();
+        hood.burnFlash();
     }
 
-    public final void setState(final TorqueDirection state, final TorqueDirection direction) {
-        this.beltDirection = state;
-        this.gateDirection = direction;
-    }
-
-    public final void setBeltDirection(final TorqueDirection direction) {
-        this.beltDirection = direction;
-    }
-
-    public final void setGateDirection(final TorqueDirection direction) {
-        this.gateDirection = direction;
+    public final void setState(final MagazineState state) {
+        this.state = state;
     }
 
     @Override
     public final void initialize(final TorqueMode mode) {
-        this.beltDirection = TorqueDirection.OFF;
-        this.gateDirection = TorqueDirection.OFF;
     }
 
-    private boolean shootingStarted = false;
-    private double shootingStartedTime = 0;
-    private final double DROP_TIME = .05;
-
-    private TorquePersistentBoolean ready = new TorquePersistentBoolean(5), locked = new TorquePersistentBoolean(5);
 
     @Override
     public final void update(final TorqueMode mode) {
         if (intake.isOutaking()) {
-            beltDirection = MAG_DOWN;
+            state = MagazineState.OUT;
         }
-        if (intake.isIntaking()) {
-            beltDirection = MAG_UP;
+        else if (state == MagazineState.POP_MINS) {
+           beltDirection = TorqueDirection.FORWARD;
+           gateDirection = TorqueDirection.FORWARD;
+        }
+        else if (state == MagazineState.OUT) {
+           beltDirection = TorqueDirection.REVERSE;
+           gateDirection = TorqueDirection.REVERSE;
+        } 
+        else {
+            beltDirection = TorqueDirection.FORWARD;
+            gateDirection = TorqueDirection.OFF;
         }
 
-        if (shooter.isShooting()) {
-            if (!shootingStarted) {
-                shootingStarted = true;
-                shootingStartedTime = Timer.getFPGATimestamp();
-            }
-            if (Timer.getFPGATimestamp() - shootingStartedTime <= (mode.isAuto() ? 0. : DROP_TIME)) {
-                beltDirection = MAG_DOWN;
-                gateDirection = TorqueDirection.REVERSE;
-            }
+        // Idle shooter flywheels for MM
+        if (state != MagazineState.OFF) {
+            flywheelLeft.setVelocityRPM(clampRPM(200));
+            flywheelRight.setVoltage(-flywheelLeft.getVoltage());
         } else {
-            shootingStarted = false;
+            flywheelLeft.setVoltage(0);
+            flywheelRight.setVoltage(0);
         }
 
-        ready.add(shooter.isReady());
-        locked.add(drivebase.isLocked());
-
-        if (ready.any() && (locked.any() || mode.isAuto())) {
-            beltDirection = MAG_UP;
-            gateDirection = TorqueDirection.FORWARD;
-        }
+        
 
         belt.setPercent(beltDirection.get());
-        SmartDashboard.putNumber("Gate", gateDirection.get());
         gate.setPercent(gateDirection.get());
-
+      
+        SmartDashboard.putNumber("Gate", gateDirection.get());
+        SmartDashboard.putNumber("Belt Amps", belt.getCurrent());
+      
         TorqueSubsystemState.logState(beltDirection);
         TorqueSubsystemState.logState(gateDirection);
 
-        SmartDashboard.putNumber("Belt Amps", belt.getCurrent());
+        
     }
-
+    private final double clampRPM(final double rpm) {
+        return TorqueMath.constrain(rpm, 0, FLYWHEEEL_MAX);
+    }
     public static final synchronized Magazine getInstance() {
         return instance == null ? instance = new Magazine() : instance;
     }

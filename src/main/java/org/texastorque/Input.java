@@ -12,18 +12,15 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import org.texastorque.subsystems.Shooter;
-import org.texastorque.subsystems.Climber.ClimberState;
+import org.texastorque.subsystems.Elevator.ElevatorState;
 import org.texastorque.subsystems.Drivebase.DrivebaseState;
 import org.texastorque.subsystems.Intake.IntakeState;
-import org.texastorque.subsystems.Magazine;
-import org.texastorque.subsystems.Shooter.ShooterState;
+import org.texastorque.subsystems.Magazine.MagazineState;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueInput;
 import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueSlewLimiter;
-import org.texastorque.torquelib.control.TorqueTraversableRange;
 import org.texastorque.torquelib.control.TorqueTraversableSelection;
 import org.texastorque.torquelib.util.GenericController;
 import org.texastorque.torquelib.util.TorqueMath;
@@ -43,8 +40,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         updateDrivebase();
         updateIntake();
         updateMagazine();
-        updateShooter();
-        updateClimber();
+        updateElevator();
     }
 
     private final TorqueTraversableSelection<Double> translationalSpeeds = new TorqueTraversableSelection<Double>(1, .5,
@@ -70,7 +66,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final TorqueSlewLimiter xLimiter = new TorqueSlewLimiter(5, 10),
             yLimiter = new TorqueSlewLimiter(5, 10);
 
-    private final static double DEADBAND = .04, LENGTH_OF_HOOK = 5, HOLE1 = 10, HOLE2 = 20, HOLE3 = 70, HOLE4 = 100;
+    private final static double DEADBAND = .04, HOLE_DIF = 5, HOLE1 = 10, HOLE2 = 20, HOLE3 = 70, HOLE4 = 100;
 
     private final void updateDrivebase() {
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
@@ -105,7 +101,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 lastRotation = rotationReal;
 
         }
-        
+
         yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
                 yLimiter::calculate);
         xVelo = TorqueUtil.conditionalApply(true, driver.getLeftYAxis() * invertCoefficient,
@@ -132,64 +128,38 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
     private final void updateMagazine() {
-        //updateManualMagazineBeltControls(operator);
-        //updateManualMagazineGateControls(operator);
-        magazine.setBeltDirection(TorqueDirection.OFF);
-        magazine.setGateDirection(TorqueDirection.OFF);
+        updateManualMagazineBeltControls(driver);
     }
 
     private final void updateManualMagazineBeltControls(final GenericController controller) {
-        if (controller.getRightTrigger())
-            magazine.setBeltDirection(Magazine.MAG_UP);
-        else if (controller.getLeftTrigger())
-            magazine.setBeltDirection(Magazine.MAG_DOWN);
-        else
-            magazine.setBeltDirection(TorqueDirection.OFF);
+        if (controller.getDPADDown())
+            magazine.setState(MagazineState.OUT);
+        else if (driver.getLeftTrigger())
+            magazine.setState(MagazineState.POP_MINS);
+        else 
+            magazine.setState(MagazineState.IDLE);
     }
 
-    private final void updateManualMagazineGateControls(final GenericController controller) {
-        if (controller.getRightBumper())
-            magazine.setGateDirection(TorqueDirection.FORWARD);
-        else if (controller.getLeftBumper())
-            magazine.setGateDirection(TorqueDirection.REVERSE);
-        else
-            magazine.setGateDirection(TorqueDirection.OFF);
-    }
-
-    private final TorqueTraversableRange flywheelRPM = new TorqueTraversableRange(1000, 200, 4000, 50);
-    private final TorqueTraversableRange hoodSetpoint = new TorqueTraversableRange(Shooter.HOOD_MIN, Shooter.HOOD_MIN,
-            Shooter.HOOD_MAX, 5);
-
-    private final void updateShooter() {
-        flywheelRPM.update(operator.getDPADRight(), operator.getDPADLeft(), false, false);
-        hoodSetpoint.update(operator.getYButton(), operator.getAButton(), false, false);
-
-        SmartDashboard.putNumber("IRPM", flywheelRPM.getSpeed());
-        SmartDashboard.putNumber("IHOOD", hoodSetpoint.getSpeed());
-
-        if (operator.getXButton()) {
-            shooter.setState(ShooterState.SETPOINT);
-            shooter.setFlywheelSpeed(flywheelRPM.getSpeed());
-            shooter.setHoodPosition(hoodSetpoint.getSpeed());
-        } else if (driver.getLeftTrigger()) {
-            shooter.setState(ShooterState.REGRESSION);
-        } else {
-            shooter.setState(ShooterState.OFF);
-        }
-    }
-
-    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0, HOLE1,
+    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(HOLE1,
             HOLE2,
             HOLE3,
             HOLE4);
 
-    private final void updateClimber() {
-        climber.setState(ClimberState.MANUAL);
+    private final void updateElevator() {
+        elevator.setState(ElevatorState.MANUAL);
         elevatorPos.calculate(driver.getDPADDown(), driver.getDPADUp());
-        if (driver.getDPADLeft())
-            climber.setLiftPos(elevatorPos.get() - LENGTH_OF_HOOK);
-        else
-            climber.setLiftPos(elevatorPos.get());
+
+        if (driver.getBButton())
+            elevator.setLiftPos(elevatorPos.get() + HOLE_DIF);
+        if (operator.getRightTrigger()) {
+            elevator.setHatchDirection(TorqueDirection.FORWARD);
+        } else if (operator.getLeftTrigger()) {
+            elevator.setLiftPos(HOLE4);
+            elevator.setHatchDirection(TorqueDirection.REVERSE);
+        } else {
+            elevator.setHatchDirection(TorqueDirection.OFF);
+            elevator.setLiftPos(elevatorPos.get());
+        }
     }
 
     public static final synchronized Input getInstance() {

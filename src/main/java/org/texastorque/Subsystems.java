@@ -20,5 +20,5 @@ public interface Subsystems {
     public final Intake intake = Intake.getInstance();
     public final Magazine magazine = Magazine.getInstance();
     public final Shooter shooter = Shooter.getInstance();
-    public final Climber climber = Climber.getInstance();
+    public final Elevator elevator = Elevator.getInstance();
 }

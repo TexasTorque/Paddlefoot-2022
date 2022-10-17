@@ -48,8 +48,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     public enum ShooterState implements TorqueSubsystemState {
         OFF,
-        REGRESSION,
-        SETPOINT,
         IDLE;
 
         public final boolean isShooting() {
@@ -61,8 +59,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     private final TorqueSparkMax hood, flywheelLeft, flywheelRight;
 
-    private double hoodSetpoint, flywheelSpeed, distance, autoOffset = 0;
-
+    private double hoodSetpoint, flywheelSpeed, distance;
     private ShooterState state = ShooterState.OFF;
 
     private Shooter() {
@@ -81,18 +78,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
         hood.configurePositionalCANFrame();
         hood.burnFlash();
-
-        disjointData = new TorqueLookUpTable();
-        disjointData.addDisjointData(disjointData.new TorqueDisjointData(2.7, 20, 1700));
-        disjointData.addDisjointData(disjointData.new TorqueDisjointData(3, 20, 1800));
-        disjointData.addDisjointData(disjointData.new TorqueDisjointData(3.6, 25, 1700));
-        disjointData.addDisjointData(disjointData.new TorqueDisjointData(3.8, 25, 1750));
-        disjointData.addDisjointData(disjointData.new TorqueDisjointData(4., 20, 1800));
-        disjointData.addDisjointData(disjointData.new TorqueDisjointData(4.4, 30, 2000));
-        disjointData.addDisjointData(disjointData.new TorqueDisjointData(4.7, 25, 2000));
-        disjointData.addDisjointData(disjointData.new TorqueDisjointData(5., 25, 2150));
-        disjointData.addDisjointData(disjointData.new TorqueDisjointData(5.4, 35, 2350));
-        disjointData.addDisjointData(disjointData.new TorqueDisjointData(6.4, 35, 2500));
     }
 
     public final void setState(final ShooterState state) {
@@ -111,10 +96,6 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         this.distance = distance;
     }
 
-    public final void setAutoOffset(final double autoOffset) {
-        this.autoOffset = autoOffset;
-    }
-
     @Override
     public final void initialize(final TorqueMode mode) {
         state = ShooterState.OFF;
@@ -122,46 +103,25 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-        distance = TorqueMath.round(distance, 1);
+        distance = TorqueMath.round(getDistance(), 1);
         data = disjointData.calculate(distance);
 
         camera.update();
 
-        if (climber.hasStarted()) {
-            flywheelSpeed = 0;
-            hoodSetpoint = HOOD_MIN;
-        } else if (state == ShooterState.REGRESSION) {
-            distance = getDistance();
-            flywheelSpeed = data.getRPM() + (mode.isAuto() ? autoOffset : 0);
-            hoodSetpoint = data.getHood();
-
-        } else if (state == ShooterState.IDLE) {
-        } else if (state == ShooterState.OFF) {
-            flywheelSpeed = 0;
-            flywheelLeft.setPercent(0);
-            flywheelLeft.setPercent(0);
-        }
-
         if (state != ShooterState.OFF) {
-            flywheelLeft.setVelocityRPM(clampRPM(flywheelSpeed));
+            flywheelLeft.setVelocityRPM(clampRPM(200));
             flywheelRight.setVoltage(-flywheelLeft.getVoltage());
+        } else {
+            flywheelLeft.setVoltage(0);
+            flywheelRight.setVoltage(0);
         }
 
         hood.setPosition(clampHood(hoodSetpoint));
 
         TorqueSubsystemState.logState(state);
 
-        SmartDashboard.putNumber("Left Flywheel Real", flywheelLeft.getVelocityRPM() / FLYWHEEEL_REDUCTION);
-        SmartDashboard.putNumber("Flywheel Req", flywheelSpeed);
-        SmartDashboard.putNumber("Hood Req", hoodSetpoint);
-
         SmartDashboard.putNumber("Distance", distance);
-        SmartDashboard.putNumber("Distance From Table", data.getDistance());
-        SmartDashboard.putNumber("Far Lookup Distance", data.getHighestPoint());
-        SmartDashboard.putNumber("Close Lookup Distance", data.getLowestPoint());
 
-        SmartDashboard.putBoolean("Is Ready", isReady());
-        SmartDashboard.putNumber("Target Offset", getTargetOffset());
     }
 
     public final boolean isShooting() {
@@ -214,7 +174,7 @@ public final class Shooter extends TorqueSubsystem implements Subsystems {
         return NetworkTableInstance.getDefault().getTable("photonvision").getSubTable("gloworm").getEntry("targetYaw")
                 .getNumber(0).doubleValue();
     }
-
+    
     public static final synchronized Shooter getInstance() {
         return instance == null ? instance = new Shooter() : instance;
     }

@@ -16,41 +16,37 @@ import org.texastorque.torquelib.motors.TorqueSparkMax;
 import org.texastorque.torquelib.util.TorqueMath;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-public final class Climber extends TorqueSubsystem implements Subsystems {
-    private static volatile Climber instance;
+public final class Elevator extends TorqueSubsystem implements Subsystems {
+    private static volatile Elevator instance;
 
     public static double LIFT_UP = 108, LIFT_BOTTOM = 0, LIFT_MULTIPLIER = .8, liftPos;
 
-    private final TorqueSparkMax lift, lift2;
+    private final TorqueSparkMax lift, lift2, hatch;
 
-    private ClimberState state = ClimberState.OFF;
+    private ElevatorState state = ElevatorState.OFF;
 
-    public enum ClimberState {
+    public enum ElevatorState {
         MANUAL, EXTEND, RETRACT, OFF;
     }
 
-    public void setState(final ClimberState state) {
+    public void setState(final ElevatorState state) {
         this.state = state;
 
     }
 
-    private TorqueDirection liftDirection = TorqueDirection.OFF;
+    private TorqueDirection liftDirection = TorqueDirection.OFF, hatchDirection = TorqueDirection.OFF;
 
-    private Climber() {
+    private Elevator() {
         lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.RIGHT);
         lift2 = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
+        hatch = new TorqueSparkMax(Ports.CLIMBER.HATCH);
+
         lift.configurePID(TorquePID.create(.2).build());
         lift2.configurePID(TorquePID.create(.2).build());
     }
 
     @Override
     public final void initialize(final TorqueMode mode) {
-        state = ClimberState.MANUAL;
-    }
-
-    public final void stop() {
-        lift.setPercent(0);
-        lift2.setPercent(0);
     }
 
     public final void setManualLift(final boolean liftUp, final boolean liftDown) {
@@ -60,42 +56,39 @@ public final class Climber extends TorqueSubsystem implements Subsystems {
             liftDirection = TorqueDirection.REVERSE;
         else
             liftDirection = TorqueDirection.NEUTRAL;
+
     }
 
     public void setLiftPos(double position) {
         liftPos = position;
     }
 
+    public void setHatchDirection(TorqueDirection direction) {
+        hatchDirection = direction;
+    }
+
     @Override
     public final void update(final TorqueMode mode) {
-
         SmartDashboard.putNumber("Climber Lift Position", lift.getPosition());
         SmartDashboard.putString("Lift Dir", liftDirection.toString());
         SmartDashboard.putString("Climber State", state.toString());
 
-        if (state == ClimberState.MANUAL) {
+        if (state == ElevatorState.MANUAL) {
             lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
                     * LIFT_MULTIPLIER);
             lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
                     * LIFT_MULTIPLIER);
-        } else if (state == ClimberState.RETRACT) {
-            lift.setPosition(LIFT_BOTTOM);
-            lift2.setPosition(-LIFT_BOTTOM);
-        } else if (state == ClimberState.EXTEND) {
-            lift.setPosition(LIFT_UP);
-            lift2.setPosition(-LIFT_UP);
+
+            hatch.setPercent(hatchDirection.get());
         } else {
             lift.setPercent(0);
             lift2.setPercent(0);
+            hatch.setPercent(0);
         }
 
     }
 
-    public final boolean hasStarted() {
-        return false;
-    }
-
-    public static final synchronized Climber getInstance() {
-        return instance == null ? instance = new Climber() : instance;
+    public static final synchronized Elevator getInstance() {
+        return instance == null ? instance = new Elevator() : instance;
     }
 }

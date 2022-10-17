@@ -53,7 +53,7 @@ public final class Ports {
             public static final int LEFT = 9;
             public static final int RIGHT = 10;
         }
-        public final static int HOOK = 11;
+        public final static int HATCH = 11;
     }
 
     public static final int TURRET = 18;
