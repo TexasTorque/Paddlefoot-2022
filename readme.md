@@ -1,6 +1,6 @@
 # Paddlefoot-2022
 
-Codebase for Paddlefoot, our 2022 offseason robot.
+Codebase for Paddlefoot, our 2022 offseason robot. Master = Rapid React. [Mineral Madness Manual](https://docs.google.com/document/d/14zJiKeNHfTmeQ2ZzQ8RP-kx3hduD3rV0CSx2J5x9dfw/edit)
 
 ## New project structure
 
@@ -34,9 +34,7 @@ Before you do anything, check the project board and issues tab. If you are addin
 
 ## Formatting
 
-I do not care, I will format with Clang-Format regardless 🙃.
-
-Just remember the order of modifiers (from left to right):
+Remember the order of modifiers (from left to right):
 
 - `private`, `protected`, or `public`
 - `static`
