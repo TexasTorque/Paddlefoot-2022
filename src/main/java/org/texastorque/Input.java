@@ -66,7 +66,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final TorqueSlewLimiter xLimiter = new TorqueSlewLimiter(5, 10),
             yLimiter = new TorqueSlewLimiter(5, 10);
 
-    private final static double DEADBAND = .04, HOLE_DIF = 5, HOLE1 = 10, HOLE2 = 20, HOLE3 = 70, HOLE4 = 100;
+    private final static double DEADBAND = .04;
 
     private final void updateDrivebase() {
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
@@ -80,18 +80,19 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND)
                 && !driver.getYButton();
 
+        // TEST FUNCTIONALITY
         if (translate.calculate(driver.getYButton())) {
             final var trans = new Translation2d(3, 4);
             drivebase.setDesiredPosition(new Pose2d(drivebase.getPose().getTranslation().plus(trans),
                     Rotation2d.fromDegrees(0)));
         }
 
-        if (noInput && !driver.getYButton() && !driver.getLeftCenterButton())
-            drivebase.setState(DrivebaseState.OFF);
-        else if (driver.getLeftCenterButton())
+        if (driver.getLeftCenterButton())
             drivebase.setState(DrivebaseState.ZERO_WHEELS);
         else if (driver.getYButton())
-            drivebase.setState(DrivebaseState.ALIGN_TO_ROCKET);
+            drivebase.setState(DrivebaseState.ALIGN_TO_TAG);
+        else if (noInput)
+            drivebase.setState(DrivebaseState.OFF);
         else {
             drivebase.setState(DrivebaseState.DRIVING);
 
@@ -99,7 +100,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 rotationRequested = -rotationPID.calculate(rotationReal, lastRotation);
             else
                 lastRotation = rotationReal;
-
         }
 
         yVelo = TorqueUtil.conditionalApply(true, -driver.getLeftXAxis() * invertCoefficient,
@@ -140,21 +140,20 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             magazine.setState(MagazineState.IDLE);
     }
 
-    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(HOLE1,
-            HOLE2,
-            HOLE3,
-            HOLE4);
+    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(10., 20., 70., 
+            100.);
+    private static final double DIFF = 5;
 
     private final void updateElevator() {
         elevator.setState(ElevatorState.MANUAL);
         elevatorPos.calculate(driver.getDPADDown(), driver.getDPADUp());
 
         if (driver.getBButton())
-            elevator.setLiftPos(elevatorPos.get() + HOLE_DIF);
+            elevator.setLiftPos(elevatorPos.get() + DIFF);
         if (operator.getRightTrigger()) {
             elevator.setHatchDirection(TorqueDirection.FORWARD);
         } else if (operator.getLeftTrigger()) {
-            elevator.setLiftPos(HOLE4);
+            // elevator.setLiftPos(100.); what is this for?
             elevator.setHatchDirection(TorqueDirection.REVERSE);
         } else {
             elevator.setHatchDirection(TorqueDirection.OFF);

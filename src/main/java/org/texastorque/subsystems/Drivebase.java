@@ -39,8 +39,6 @@ import org.texastorque.torquelib.util.TorqueSwerveOdometry;
 public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static volatile Drivebase instance;
 
-    public boolean driving = false;
-
     public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 25, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 25, // TEST NEW MAX SPEEDS
             DRIVE_MAX_ROTATIONAL_SPEED = 25 * Math.PI, TOLERANCE = 7, ROCKET_X_OFFSET = 5, ROCKET_Y_OFFSET = 5;
 
@@ -87,7 +85,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     public enum DrivebaseState {
         OFF,
         DRIVING,
-        ALIGN_TO_ROCKET,
+        ALIGN_TO_TAG,
         ZERO_WHEELS
     }
 
@@ -146,36 +144,24 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-        final double maxTranslatingSpeed = translationalSpeedCoef * DRIVE_MAX_TRANSLATIONAL_SPEED;
-        final double maxRotationalSpeed = rotationalSpeedCoef * DRIVE_MAX_ROTATIONAL_SPEED;
+      
 
         odometry.update(gyro.getRotation2dClockwise().times(-1), frontLeft.getState(), frontRight.getState(),
                 backLeft.getState(), backRight.getState());
 
-        if (state == DrivebaseState.DRIVING) {
-            if (mode.isTeleop())
-                speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * maxTranslatingSpeed,
-                        speeds.vyMetersPerSecond * maxTranslatingSpeed,
-                        speeds.omegaRadiansPerSecond * maxRotationalSpeed,
-                        gyro.getRotation2dClockwise());
+      
 
-            if (shooter.isShooting() && shouldTarget && !mode.isAuto()) {
-                SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
-                offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5);
-                speeds.omegaRadiansPerSecond = -targetPID.calculate(-shooter.getTargetOffset(), offset);
-            }
-
-        } else if (state == DrivebaseState.ZERO_WHEELS) {
+        if (state == DrivebaseState.ZERO_WHEELS) {
             zeroWheels();
+        } else if (state == DrivebaseState.OFF) {
+            // Do nothing!
         } else {
-            speeds = new ChassisSpeeds(0, 0, 0);
-        }
-
-        if (state != DrivebaseState.ZERO_WHEELS) {
-            swerveModuleStates = (state == DrivebaseState.ALIGN_TO_ROCKET
-                    ? kinematics.toSwerveModuleStates(alignToRocket())
-                    : kinematics.toSwerveModuleStates(speeds));
-            SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DRIVE_MAX_TRANSLATIONAL_SPEED);
+            if (state == DrivebaseState.DRIVING) 
+                normalDriving(mode);
+            else if (state == DrivebaseState.ALIGN_TO_TAG)
+                alignToTag();
+            
+            SwerveDriveKinematics.desaturateWheelSpeeds(kinematics.toSwerveModuleStates(speeds), DRIVE_MAX_TRANSLATIONAL_SPEED);
 
             frontLeft.setDesiredState(swerveModuleStates[0]);
             frontRight.setDesiredState(swerveModuleStates[1]);
@@ -185,13 +171,29 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
         log();
     }
+    public final void normalDriving(final TorqueMode mode) {
+        final double maxTranslatingSpeed = translationalSpeedCoef * DRIVE_MAX_TRANSLATIONAL_SPEED;
+        final double maxRotationalSpeed = rotationalSpeedCoef * DRIVE_MAX_ROTATIONAL_SPEED;
 
-    public ChassisSpeeds alignToRocket() {
-        ChassisSpeeds adjustedSpeeds = controller.calculate(
+        if (mode.isTeleop())
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * maxTranslatingSpeed,
+                    speeds.vyMetersPerSecond * maxTranslatingSpeed,
+                    speeds.omegaRadiansPerSecond * maxRotationalSpeed,
+                    gyro.getRotation2dClockwise());
+
+        if (shooter.isShooting() && shouldTarget && !mode.isAuto()) {
+            SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
+            offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5);
+            speeds.omegaRadiansPerSecond = -targetPID.calculate(-shooter.getTargetOffset(), offset);
+        }
+    }
+
+    public final void alignToTag() {
+        final ChassisSpeeds adjustedSpeeds = controller.calculate(
                 getOdometry().getPoseMeters(), desired, 0,
                 Rotation2d.fromDegrees(0));
         adjustedSpeeds.vxMetersPerSecond *= -1;
-        return adjustedSpeeds;
+        speeds = adjustedSpeeds;
     }
 
     public ChassisSpeeds alignWithVision() {
