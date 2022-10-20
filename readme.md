@@ -1,6 +1,8 @@
 # Paddlefoot-2022
 
-Codebase for Paddlefoot, our 2022 offseason robot. Master = Rapid React. [Mineral Madness Manual](https://docs.google.com/document/d/14zJiKeNHfTmeQ2ZzQ8RP-kx3hduD3rV0CSx2J5x9dfw/edit)
+Codebase for Paddlefoot, our 2022 offseason robot. 
+
+Master = Rapid React. [Mineral Mayhem Manual](https://docs.google.com/document/d/14zJiKeNHfTmeQ2ZzQ8RP-kx3hduD3rV0CSx2J5x9dfw/edit)
 
 ## New project structure
 
