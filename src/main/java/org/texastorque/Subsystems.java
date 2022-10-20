@@ -19,6 +19,5 @@ public interface Subsystems {
     public final Drivebase drivebase = Drivebase.getInstance();
     public final Intake intake = Intake.getInstance();
     public final Magazine magazine = Magazine.getInstance();
-    public final Shooter shooter = Shooter.getInstance();
     public final Elevator elevator = Elevator.getInstance();
 }

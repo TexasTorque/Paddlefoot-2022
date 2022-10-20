@@ -144,24 +144,22 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-      
 
         odometry.update(gyro.getRotation2dClockwise().times(-1), frontLeft.getState(), frontRight.getState(),
                 backLeft.getState(), backRight.getState());
-
-      
 
         if (state == DrivebaseState.ZERO_WHEELS) {
             zeroWheels();
         } else if (state == DrivebaseState.OFF) {
             // Do nothing!
         } else {
-            if (state == DrivebaseState.DRIVING) 
+            if (state == DrivebaseState.DRIVING)
                 normalDriving(mode);
             else if (state == DrivebaseState.ALIGN_TO_TAG)
                 alignToTag();
-            
-            SwerveDriveKinematics.desaturateWheelSpeeds(kinematics.toSwerveModuleStates(speeds), DRIVE_MAX_TRANSLATIONAL_SPEED);
+
+            SwerveDriveKinematics.desaturateWheelSpeeds(kinematics.toSwerveModuleStates(speeds),
+                    DRIVE_MAX_TRANSLATIONAL_SPEED);
 
             frontLeft.setDesiredState(swerveModuleStates[0]);
             frontRight.setDesiredState(swerveModuleStates[1]);
@@ -171,6 +169,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
         log();
     }
+
     public final void normalDriving(final TorqueMode mode) {
         final double maxTranslatingSpeed = translationalSpeedCoef * DRIVE_MAX_TRANSLATIONAL_SPEED;
         final double maxRotationalSpeed = rotationalSpeedCoef * DRIVE_MAX_ROTATIONAL_SPEED;
@@ -181,11 +180,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                     speeds.omegaRadiansPerSecond * maxRotationalSpeed,
                     gyro.getRotation2dClockwise());
 
-        if (shooter.isShooting() && shouldTarget && !mode.isAuto()) {
-            SmartDashboard.putNumber("Targeting Y Speed", speeds.vyMetersPerSecond);
-            offset = TorqueMath.deadband(speeds.vyMetersPerSecond, -.5, .5);
-            speeds.omegaRadiansPerSecond = -targetPID.calculate(-shooter.getTargetOffset(), offset);
-        }
     }
 
     public final void alignToTag() {
@@ -196,26 +190,21 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         speeds = adjustedSpeeds;
     }
 
-    public ChassisSpeeds alignWithVision() {
-        double xToRocket = shooter.getDistance() / Math.asin(shooter.getTargetOffset()) + ROCKET_X_OFFSET;
-        double YToRocket = shooter.getDistance() / Math.acos(shooter.getTargetOffset()) + ROCKET_Y_OFFSET;
+    // public ChassisSpeeds alignWithVision() {
+    //     double xToRocket = magazine.getDistance() / Math.asin(shooter.getTargetOffset()) + ROCKET_X_OFFSET;
+    //     double YToRocket = shooter.getDistance() / Math.acos(shooter.getTargetOffset()) + ROCKET_Y_OFFSET;
 
-        ChassisSpeeds adjustedSpeeds = controller.calculate(
-                getOdometry().getPoseMeters(), new Pose2d(new Translation2d(xToRocket, YToRocket), new Rotation2d()), 0,
-                Rotation2d.fromDegrees(0));
-        return adjustedSpeeds;
-    }
+    //     ChassisSpeeds adjustedSpeeds = controller.calculate(
+    //             getOdometry().getPoseMeters(), new Pose2d(new Translation2d(xToRocket, YToRocket), new Rotation2d()), 0,
+    //             Rotation2d.fromDegrees(0));
+    //     return adjustedSpeeds;
+    // }
 
     public void zeroWheels() {
         frontLeft.setRotatePosition(0);
         frontRight.setRotatePosition(0);
         backLeft.setRotatePosition(0);
         backRight.setRotatePosition(0);
-    }
-
-    public final boolean isLocked() {
-        final TorqueLight camera = shooter.getCamera();
-        return camera.hasTargets() && Math.abs(camera.getTargetYaw()) < TOLERANCE;
     }
 
     public final SwerveDriveKinematics getKinematics() {

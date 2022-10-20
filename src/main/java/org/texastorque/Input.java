@@ -82,9 +82,9 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
         // TEST FUNCTIONALITY
         if (translate.calculate(driver.getYButton())) {
-            final var trans = new Translation2d(3, 4);
+            final var trans = new Translation2d(4, 4);
             drivebase.setDesiredPosition(new Pose2d(drivebase.getPose().getTranslation().plus(trans),
-                    Rotation2d.fromDegrees(0)));
+                    Rotation2d.fromDegrees(90)));
         }
 
         if (driver.getLeftCenterButton())
@@ -136,11 +136,11 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             magazine.setState(MagazineState.OUT);
         else if (driver.getLeftTrigger())
             magazine.setState(MagazineState.POP_MINS);
-        else 
+        else
             magazine.setState(MagazineState.IDLE);
     }
 
-    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(10., 20., 70., 
+    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(10., 20., 70.,
             100.);
     private static final double DIFF = 5;
 
