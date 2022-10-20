@@ -158,7 +158,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
             else if (state == DrivebaseState.ALIGN_TO_TAG)
                 alignToTag();
 
-            SwerveDriveKinematics.desaturateWheelSpeeds(kinematics.toSwerveModuleStates(speeds),
+            swerveModuleStates = kinematics.toSwerveModuleStates(speeds);
+            SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
                     DRIVE_MAX_TRANSLATIONAL_SPEED);
 
             frontLeft.setDesiredState(swerveModuleStates[0]);
