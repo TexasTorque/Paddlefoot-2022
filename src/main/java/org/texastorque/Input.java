@@ -127,17 +127,14 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
     private final void updateMagazine() {
-        updateManualMagazineBeltControls(driver);
-    }
-
-    private final void updateManualMagazineBeltControls(final GenericController controller) {
-        if (controller.getDPADDown())
+        if (driver.getAButton())
             magazine.setState(MagazineState.OUT);
         else if (driver.getLeftTrigger())
-            magazine.setState(MagazineState.POP_MINS);
+            magazine.setState(MagazineState.POP);
         else
-            magazine.setState(MagazineState.IDLE);
+            magazine.setState(MagazineState.OFF);
     }
+
 
     private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(10., 20., 70.,
             100.);
@@ -147,16 +144,14 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         elevator.setState(ElevatorState.MANUAL);
         elevatorPos.calculate(driver.getDPADDown(), driver.getDPADUp());
 
-        if (driver.getBButton())
-            elevator.setLiftPos(elevatorPos.get() + DIFF);
+        elevator.setLiftPos(elevatorPos.get() + (driver.getBButton() ? DIFF : 0));
+
         if (operator.getRightTrigger())
             elevator.setHatchDirection(TorqueDirection.FORWARD);
         else if (operator.getLeftTrigger())
             elevator.setHatchDirection(TorqueDirection.REVERSE);
-        else {
+        else
             elevator.setHatchDirection(TorqueDirection.OFF);
-            elevator.setLiftPos(elevatorPos.get());
-        }
     }
 
     public static final synchronized Input getInstance() {

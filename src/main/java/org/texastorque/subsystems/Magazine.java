@@ -23,17 +23,21 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
     public static enum MagazineState {
         OFF,
         OUT,
-        IDLE,
-        POP_MINS;
+        INTAKE,
+        POP;
     }
-    public static final double FLYWHEEEL_MAX = 3000;
+    public static final double RPM = 200;
+
     private final TorqueSparkMax belt, gate, hood, flywheelLeft, flywheelRight;
+
     public TorqueDirection beltDirection, gateDirection;
+
     public MagazineState state;
-    
+
     private Magazine() {
         belt = new TorqueSparkMax(Ports.MAGAZINE.BELT);
         belt.configureDumbCANFrame();
+
         gate = new TorqueSparkMax(Ports.MAGAZINE.GATE);
         gate.configureDumbCANFrame();
 
@@ -44,9 +48,11 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
         // Stuff from shooter
         flywheelLeft = new TorqueSparkMax(Ports.SHOOTER.FLYWHEEL.LEFT);
         flywheelRight = new TorqueSparkMax(Ports.SHOOTER.FLYWHEEL.RIGHT);
+
         flywheelLeft.configurePID(TorquePID.create(.000005).addFeedForward(.00034).setTolerance(20).build());
+
         hood = new TorqueSparkMax(Ports.SHOOTER.HOOD);
-                hood.configurePID(TorquePID.create(.1)
+        hood.configurePID(TorquePID.create(.1)
                 .addIntegral(.001)
                 .addOutputRange(-.7, .7)
                 .addIntegralZone(.3)
@@ -67,32 +73,36 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
-        if (intake.isOutaking()) {
+        if (intake.isOutaking())
             state = MagazineState.OUT;
+        if (intake.isIntaking())
+            state = MagazineState.INTAKE;
+        
+        if (state == MagazineState.POP) {
+            beltDirection = TorqueDirection.FORWARD;
+            gateDirection = TorqueDirection.FORWARD;
         }
-        else if (state == MagazineState.POP_MINS) {
-           beltDirection = TorqueDirection.FORWARD;
-           gateDirection = TorqueDirection.FORWARD;
+        else if (state == MagazineState.INTAKE) {
+            beltDirection = TorqueDirection.FORWARD;
+            gateDirection = TorqueDirection.REVERSE;
         }
         else if (state == MagazineState.OUT) {
-           beltDirection = TorqueDirection.REVERSE;
-           gateDirection = TorqueDirection.REVERSE;
+            beltDirection = TorqueDirection.OFF;
+            gateDirection = TorqueDirection.REVERSE;
         } 
         else {
-            beltDirection = TorqueDirection.FORWARD;
+            beltDirection = TorqueDirection.OFF;
             gateDirection = TorqueDirection.OFF;
         }
 
         // Idle shooter flywheels for MM
         if (state != MagazineState.OFF) {
-            flywheelLeft.setVelocityRPM(clampRPM(200));
+            flywheelLeft.setVelocityRPM(RPM);
             flywheelRight.setVoltage(-flywheelLeft.getVoltage());
         } else {
             flywheelLeft.setVoltage(0);
             flywheelRight.setVoltage(0);
         }
-
-        
 
         belt.setPercent(beltDirection.get());
         gate.setPercent(gateDirection.get());
@@ -105,9 +115,7 @@ public final class Magazine extends TorqueSubsystem implements Subsystems {
 
         
     }
-    private final double clampRPM(final double rpm) {
-        return TorqueMath.constrain(rpm, 0, FLYWHEEEL_MAX);
-    }
+
     public static final synchronized Magazine getInstance() {
         return instance == null ? instance = new Magazine() : instance;
     }

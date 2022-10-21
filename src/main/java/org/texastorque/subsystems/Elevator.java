@@ -74,21 +74,21 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Lift Dir", liftDirection.toString());
         SmartDashboard.putString("Climber State", state.toString());
 
+        hatch.setPercent(hatchDirection.get());
+
         if (state == ElevatorState.MANUAL) {
             lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
                     * LIFT_MULTIPLIER);
             lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
                     * LIFT_MULTIPLIER);
 
-            hatch.setPercent(hatchDirection.get());
         } else {
             lift.setPercent(0);
             lift2.setPercent(0);
-            hatch.setPercent(0);
         }
 
+        hatchDirection = TorqueDirection.OFF;
     }
-
 
     public static final synchronized Elevator getInstance() {
         return instance == null ? instance = new Elevator() : instance;
