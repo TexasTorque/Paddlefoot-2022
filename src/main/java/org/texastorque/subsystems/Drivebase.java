@@ -6,18 +6,31 @@
  */
 package org.texastorque.subsystems;
 
+import edu.wpi.first.math.MatBuilder;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.controller.HolonomicDriveController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.texastorque.Ports;
 import org.texastorque.Subsystems;
 import org.texastorque.torquelib.base.TorqueMode;
@@ -34,6 +47,7 @@ import org.texastorque.torquelib.util.TorqueSwerveOdometry;
  *
  * @author Jack Pittenger
  * @author Justus Languell
+ * @author Omar Afzal
  */
 @SuppressWarnings("deprecation")
 public final class Drivebase extends TorqueSubsystem implements Subsystems {
@@ -42,61 +56,73 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 25, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 25, // TEST NEW MAX SPEEDS
             DRIVE_MAX_ROTATIONAL_SPEED = 25 * Math.PI, TOLERANCE = 7, ROCKET_X_OFFSET = 5, ROCKET_Y_OFFSET = 5;
 
+    // These are constants for our specifics swerve modules
     private static final double DRIVE_GEARING = .1875, // Drive rotations per motor rotations
             DRIVE_WHEEL_RADIUS = Units.inchesToMeters(1.788), DISTANCE_TO_CENTER_X = Units.inchesToMeters(10.875),
             DISTANCE_TO_CENTER_Y = Units.inchesToMeters(10.875);
-
     public static final TorquePID DRIVE_PID = TorquePID.create(.00048464).addIntegralZone(.2).build();
     public static final TorquePID ROTATE_PID = TorquePID.create(.3).build();
-
     public final SimpleMotorFeedforward DRIVE_FEED_FORWARD = new SimpleMotorFeedforward(.27024, 2.4076, .5153);
 
+    // These PID controllers are for the macro position control during targeting sequences
     public final ProfiledPIDController thetaController;
     private final HolonomicDriveController controller;
-
     private final TorquePID xController = TorquePID.create(8).build();
     private final TorquePID yController = TorquePID.create(8).build();
 
+    // This caches the desired position translation
     private Pose2d desired = new Pose2d(0, 0, Rotation2d.fromDegrees(0));
 
-    private final Translation2d locationBackLeft = new Translation2d(DISTANCE_TO_CENTER_X, -DISTANCE_TO_CENTER_Y),
+    // These constants are translation representations of the locations of the swerve modules
+    private final Translation2d 
+            locationBackLeft = new Translation2d(DISTANCE_TO_CENTER_X, -DISTANCE_TO_CENTER_Y),
             locationBackRight = new Translation2d(DISTANCE_TO_CENTER_X, DISTANCE_TO_CENTER_Y),
             locationFrontLeft = new Translation2d(-DISTANCE_TO_CENTER_X, -DISTANCE_TO_CENTER_Y),
             locationFrontRight = new Translation2d(-DISTANCE_TO_CENTER_X, DISTANCE_TO_CENTER_Y);
 
+    // This is the kinematics object that calculates the desired wheel speeds
     private final SwerveDriveKinematics kinematics;
-    private final TorqueSwerveOdometry odometry;
 
+    // private final TorqueSwerveOdometry odometry;
+
+    // PoseEstimator is a more advanced odometry system that uses a Kalman filter to estimate the robot's position
+    // It also encorporates other measures like April tag positions
+    private final SwerveDrivePoseEstimator poseEstimator;
+    
+    // Matrix constants for the pose estimator.
+    private static final Matrix<N3, N1> STATE_STDS = new MatBuilder<>(Nat.N3(), Nat.N1()).fill(0.05, 0.05, .02);
+    private static final Matrix<N1, N1> LOCAL_STDS = new MatBuilder<>(Nat.N1(), Nat.N1()).fill(.01);
+    private static final Matrix<N3, N1> VISION_STDS = new MatBuilder<>(Nat.N3(), Nat.N1()).fill(.025, .025, .025);
+
+    // The swerve module objects
     private final TorqueSwerveModule2021 backLeft, backRight, frontLeft, frontRight;
+    // The states to be mapped
     private SwerveModuleState[] swerveModuleStates;
-
+    // The cached vector of the robot
     private ChassisSpeeds speeds = new ChassisSpeeds(0, 0, 0);
-
+    // The instance of the NavX
     private final TorqueNavXGyro gyro = TorqueNavXGyro.getInstance();
-
+    // Translation and rotation coefs for the speed shifter
     private double translationalSpeedCoef, rotationalSpeedCoef;
+    // The field representation of the robot for logging
+    private final Field2d aprilField = new Field2d();
+    // A table of April tags by ID and their positions
+    private final Map<Integer, Pose3d> aprilTags;
 
-    public DrivebaseState state;
-
+    // The state of the drivebase (no shit)
     public enum DrivebaseState {
         OFF,
         DRIVING,
         ALIGN_TO_TAG,
         ZERO_WHEELS
-    }
-
-    public void setState(DrivebaseState state) {
-        this.state = state;
-    }
-
-    public DrivebaseState getState() {
-        return state;
-    }
+    } 
+    public DrivebaseState state;
 
     private Drivebase() {
         state = DrivebaseState.OFF;
+
+        // Instantiating the individual modules
         backLeft = buildSwerveModule(0, Ports.DRIVEBASE.TRANSLATIONAL.LEFT.BACK, Ports.DRIVEBASE.ROTATIONAL.LEFT.BACK);
-        backLeft.setLogging(true);
         backRight = buildSwerveModule(1, Ports.DRIVEBASE.TRANSLATIONAL.RIGHT.BACK,
                 Ports.DRIVEBASE.ROTATIONAL.RIGHT.BACK);
         frontLeft = buildSwerveModule(2, Ports.DRIVEBASE.TRANSLATIONAL.LEFT.FRONT,
@@ -104,15 +130,53 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         frontRight = buildSwerveModule(3, Ports.DRIVEBASE.TRANSLATIONAL.RIGHT.FRONT,
                 Ports.DRIVEBASE.ROTATIONAL.RIGHT.FRONT);
 
+        // Instantiating the kinematics object
         kinematics = new SwerveDriveKinematics(locationBackLeft, locationBackRight, locationFrontLeft,
                 locationFrontRight);
 
-        odometry = new TorqueSwerveOdometry(kinematics, gyro.getRotation2dClockwise());
+        // odometry = new TorqueSwerveOdometry(kinematics, gyro.getRotation2dClockwise());
 
+        // Instantiating the pose estimator
+        poseEstimator = new SwerveDrivePoseEstimator(gyro.getRotation2dClockwise().times(-1),
+                new Pose2d(), kinematics, STATE_STDS,
+                LOCAL_STDS, VISION_STDS);
+
+        // Instantiating and configuring the positional PID controllers
         thetaController = new ProfiledPIDController(4, 0, 0,
                 new TrapezoidProfile.Constraints(3 * Math.PI, 3 * Math.PI));
         thetaController.enableContinuousInput(Math.toRadians(-180), Math.toRadians(180));
         controller = new HolonomicDriveController(xController, yController, thetaController);
+
+        // Putting the aprilField object to Shuffleboard
+        SmartDashboard.putData("April Position", aprilField);
+
+        // Setting up the April tag map
+        // I think it would be cool to serialize these from JSON or some other format
+        // {
+        //   0: {
+        //     x: 6.6, 
+        //     y: 3.4, 
+        //     z: 1.6002, 
+        //     r: {
+        //       x: 0, 
+        //       y: 0, 
+        //       z: 15
+        //     }
+        //   },
+        //   69: {
+        //     x: 6.6, 
+        //     y: 3.4, 
+        //     z: 1.6002, 
+        //     r: {
+        //       x: 0, 
+        //       y: 0, 
+        //       z: 15
+        //     }
+        //   }
+        // }
+        aprilTags = new HashMap<Integer, Pose3d>();
+        aprilTags.put(0, new Pose3d(6.6, 3.4, 1.6002, new Rotation3d(0, 0, 15)));
+        aprilTags.put(69, new Pose3d(9, 2.45, 1.6002, new Rotation3d(0, 0, 105)));
 
         stopMoving();
     }
@@ -135,10 +199,18 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         stopMoving();
     }
 
+    public final void updateFeedback() {
+        poseEstimator.update(gyro.getRotation2dClockwise().times(-1),
+                frontLeft.getState(), frontRight.getState(),
+                backLeft.getState(), backRight.getState());
+        // field2d.setRobotPose(poseEstimator.getEstimatedPosition());
+    }
+
     @Override
     public final void update(final TorqueMode mode) {
-        odometry.update(gyro.getRotation2dClockwise().times(-1), frontLeft.getState(), frontRight.getState(),
-                backLeft.getState(), backRight.getState());
+        // odometry.update(gyro.getRotation2dClockwise().times(-1), frontLeft.getState(), frontRight.getState(),
+        //         backLeft.getState(), backRight.getState());
+        updateFeedback();
 
         if (state == DrivebaseState.ZERO_WHEELS) {
             zeroWheels();
@@ -176,7 +248,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     }
 
     public final void alignToTag() {
-        // Test code for PID spline movement
+
         final ChassisSpeeds adjustedSpeeds = controller.calculate(
                 getOdometry().getPoseMeters(), desired, 0,
                 Rotation2d.fromDegrees(0));

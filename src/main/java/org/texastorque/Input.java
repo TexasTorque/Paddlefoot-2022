@@ -77,14 +77,14 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
         final boolean noInput = TorqueMath.toleranced(driver.getLeftYAxis(), DEADBAND)
                 && TorqueMath.toleranced(driver.getLeftXAxis(), DEADBAND)
-                && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND)
-                && !driver.getYButton();
+                && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND);
+                //&& !driver.getYButton(); // this shouldnt matter
 
         // TEST FUNCTIONALITY
         if (translate.calculate(driver.getYButton())) {
-            final var trans = new Translation2d(4, 4);
-            drivebase.setDesiredPosition(new Pose2d(drivebase.getPose().getTranslation().plus(trans),
-                    Rotation2d.fromDegrees(90)));
+            // final var trans = new Translation2d(4, 4);
+            // drivebase.setDesiredPosition(new Pose2d(drivebase.getPose().getTranslation().plus(trans),
+            //         Rotation2d.fromDegrees(90)));
         }
 
         if (driver.getLeftCenterButton())
