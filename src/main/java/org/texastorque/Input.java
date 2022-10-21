@@ -91,8 +91,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             drivebase.setState(DrivebaseState.ZERO_WHEELS);
         else if (driver.getYButton())
             drivebase.setState(DrivebaseState.ALIGN_TO_TAG);
-        else if (noInput)
-            drivebase.setState(DrivebaseState.OFF);
+        else if (noInput) drivebase.setState(DrivebaseState.OFF);
         else {
             drivebase.setState(DrivebaseState.DRIVING);
 
@@ -150,12 +149,11 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
         if (driver.getBButton())
             elevator.setLiftPos(elevatorPos.get() + DIFF);
-        if (operator.getRightTrigger()) {
+        if (operator.getRightTrigger())
             elevator.setHatchDirection(TorqueDirection.FORWARD);
-        } else if (operator.getLeftTrigger()) {
-            // elevator.setLiftPos(100.); what is this for?
+        else if (operator.getLeftTrigger())
             elevator.setHatchDirection(TorqueDirection.REVERSE);
-        } else {
+        else {
             elevator.setHatchDirection(TorqueDirection.OFF);
             elevator.setLiftPos(elevatorPos.get());
         }

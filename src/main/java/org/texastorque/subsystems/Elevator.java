@@ -49,6 +49,7 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
     public final void initialize(final TorqueMode mode) {
     }
 
+    // Designed for a lift and retract button
     public final void setManualLift(final boolean liftUp, final boolean liftDown) {
         if (liftUp)
             liftDirection = TorqueDirection.FORWARD;
@@ -87,6 +88,7 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         }
 
     }
+
 
     public static final synchronized Elevator getInstance() {
         return instance == null ? instance = new Elevator() : instance;

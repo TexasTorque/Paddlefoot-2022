@@ -74,11 +74,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     private final TorqueNavXGyro gyro = TorqueNavXGyro.getInstance();
 
-    private double translationalSpeedCoef, rotationalSpeedCoef, offset;
-
-    private boolean shouldTarget = false;
-
-    private final TorquePID targetPID = TorquePID.create(.6).build();;
+    private double translationalSpeedCoef, rotationalSpeedCoef;
 
     public DrivebaseState state;
 
@@ -118,7 +114,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         thetaController.enableContinuousInput(Math.toRadians(-180), Math.toRadians(180));
         controller = new HolonomicDriveController(xController, yController, thetaController);
 
-        reset();
+        stopMoving();
     }
 
     public final void setSpeedCoefs(final double translational, final double rotational) {
@@ -136,27 +132,23 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void initialize(final TorqueMode mode) {
-        if (mode.isTeleop())
-            shouldTarget = true;
-
-        reset();
+        stopMoving();
     }
 
     @Override
     public final void update(final TorqueMode mode) {
-
         odometry.update(gyro.getRotation2dClockwise().times(-1), frontLeft.getState(), frontRight.getState(),
                 backLeft.getState(), backRight.getState());
 
         if (state == DrivebaseState.ZERO_WHEELS) {
             zeroWheels();
-        } else if (state == DrivebaseState.OFF) {
-            // Do nothing!
         } else {
             if (state == DrivebaseState.DRIVING)
                 normalDriving(mode);
             else if (state == DrivebaseState.ALIGN_TO_TAG)
                 alignToTag();
+            else
+                stopMoving();
 
             swerveModuleStates = kinematics.toSwerveModuleStates(speeds);
             SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
@@ -184,22 +176,13 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     }
 
     public final void alignToTag() {
+        // Test code for PID spline movement
         final ChassisSpeeds adjustedSpeeds = controller.calculate(
                 getOdometry().getPoseMeters(), desired, 0,
                 Rotation2d.fromDegrees(0));
         adjustedSpeeds.vxMetersPerSecond *= -1;
         speeds = adjustedSpeeds;
     }
-
-    // public ChassisSpeeds alignWithVision() {
-    //     double xToRocket = magazine.getDistance() / Math.asin(shooter.getTargetOffset()) + ROCKET_X_OFFSET;
-    //     double YToRocket = shooter.getDistance() / Math.acos(shooter.getTargetOffset()) + ROCKET_Y_OFFSET;
-
-    //     ChassisSpeeds adjustedSpeeds = controller.calculate(
-    //             getOdometry().getPoseMeters(), new Pose2d(new Translation2d(xToRocket, YToRocket), new Rotation2d()), 0,
-    //             Rotation2d.fromDegrees(0));
-    //     return adjustedSpeeds;
-    // }
 
     public void zeroWheels() {
         frontLeft.setRotatePosition(0);
@@ -241,7 +224,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putNumber("Desired Rotation", desired.getRotation().getDegrees());
     }
 
-    public final void reset() {
+    public final void stopMoving() {
         speeds = new ChassisSpeeds(0, 0, 0);
     }
 
