@@ -88,12 +88,12 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         }
 
         if (driver.getLeftCenterButton())
-            drivebase.setState(DrivebaseState.ZERO_WHEELS);
+            drivebase.state = DrivebaseState.ZERO_WHEELS;
         else if (driver.getYButton())
-            drivebase.setState(DrivebaseState.ALIGN_TO_TAG);
-        else if (noInput) drivebase.setState(DrivebaseState.OFF);
+            drivebase.state = DrivebaseState.ALIGN_TO_TAG;
+        else if (noInput) drivebase.state = DrivebaseState.OFF;
         else {
-            drivebase.setState(DrivebaseState.DRIVING);
+            drivebase.state = DrivebaseState.DRIVING;
 
             if (rotationRequested == 0)
                 rotationRequested = -rotationPID.calculate(rotationReal, lastRotation);

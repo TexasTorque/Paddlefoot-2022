@@ -39,8 +39,10 @@ import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.modules.TorqueSwerveModule2021;
 import org.texastorque.torquelib.sensors.TorqueLight;
 import org.texastorque.torquelib.sensors.TorqueNavXGyro;
+import org.texastorque.torquelib.sensors.util.TorqueAprilTagMap;
 import org.texastorque.torquelib.util.TorqueMath;
 import org.texastorque.torquelib.util.TorqueSwerveOdometry;
+import org.texastorque.torquelib.util.TorqueUtil;
 
 /**
  * The drivebase subsystem. Drives with 4 2021 swerve modules.
@@ -109,6 +111,10 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     // A table of April tags by ID and their positions
     private final Map<Integer, Pose3d> aprilTags;
 
+    // The TorqueLight object
+    private final TorqueLight camera;
+    public final TorqueLight getCamera() { return camera; }
+
     // The state of the drivebase (no shit)
     public enum DrivebaseState {
         OFF,
@@ -150,33 +156,12 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         // Putting the aprilField object to Shuffleboard
         SmartDashboard.putData("April Position", aprilField);
 
-        // Setting up the April tag map
-        // I think it would be cool to serialize these from JSON or some other format
-        // {
-        //   0: {
-        //     x: 6.6, 
-        //     y: 3.4, 
-        //     z: 1.6002, 
-        //     r: {
-        //       x: 0, 
-        //       y: 0, 
-        //       z: 15
-        //     }
-        //   },
-        //   69: {
-        //     x: 6.6, 
-        //     y: 3.4, 
-        //     z: 1.6002, 
-        //     r: {
-        //       x: 0, 
-        //       y: 0, 
-        //       z: 15
-        //     }
-        //   }
-        // }
         aprilTags = new HashMap<Integer, Pose3d>();
         aprilTags.put(0, new Pose3d(6.6, 3.4, 1.6002, new Rotation3d(0, 0, 15)));
         aprilTags.put(69, new Pose3d(9, 2.45, 1.6002, new Rotation3d(0, 0, 105)));
+        //aprilTags = TorqueAprilTagMap.fromJSON();
+
+        camera = new TorqueLight();
 
         stopMoving();
     }
@@ -204,10 +189,23 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 frontLeft.getState(), frontRight.getState(),
                 backLeft.getState(), backRight.getState());
         // field2d.setRobotPose(poseEstimator.getEstimatedPosition());
+
+        if (camera.hasTargets()) {
+            Pose2d pose =  camera.getRobotPoseAprilTag(aprilTags, CAMERA_ANGLE.getDegrees(), CAMERA_HEIGHT, gyro.getRotation2dCounterClockwise(), 0);
+            SmartDashboard.putString("AprilPos", String.format("(%02.3f, %02.3f)", pose.getX(), pose.getY()));
+            aprilField.setRobotPose(pose);
+            poseEstimator.addVisionMeasurement(pose, TorqueUtil.time() - camera.getLatency() / 1000.);
+
+        }
     }
+
+    private static final Rotation2d CAMERA_ANGLE = new Rotation2d(0); // from which way?
+    private static final double CAMERA_HEIGHT = Units.inchesToMeters(33); 
 
     @Override
     public final void update(final TorqueMode mode) {
+        camera.update();
+
         // odometry.update(gyro.getRotation2dClockwise().times(-1), frontLeft.getState(), frontRight.getState(),
         //         backLeft.getState(), backRight.getState());
         updateFeedback();
@@ -250,7 +248,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     public final void alignToTag() {
 
         final ChassisSpeeds adjustedSpeeds = controller.calculate(
-                getOdometry().getPoseMeters(), desired, 0,
+                getPose(), desired, 0,
                 Rotation2d.fromDegrees(0));
         adjustedSpeeds.vxMetersPerSecond *= -1;
         speeds = adjustedSpeeds;
@@ -267,12 +265,13 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         return kinematics;
     }
 
-    public final TorqueSwerveOdometry getOdometry() {
-        return odometry;
-    }
+    // public final TorqueSwerveOdometry getOdometry() {
+    //     return odometry;
+    // }
 
     public final Pose2d getPose() {
-        return odometry.getPoseMeters();
+        // return odometry.getPoseMeters();
+        return poseEstimator.getEstimatedPosition();
     }
 
     public final TorqueNavXGyro getGyro() {
