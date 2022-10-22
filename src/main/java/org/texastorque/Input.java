@@ -136,8 +136,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
 
-    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(10., 20., 70.,
-            100.);
+    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0., -25., -45., -70.);
     private static final double DIFF = 5;
 
     private final void updateElevator() {
