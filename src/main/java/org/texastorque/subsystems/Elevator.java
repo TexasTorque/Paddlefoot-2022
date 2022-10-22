@@ -11,6 +11,7 @@ import org.texastorque.Subsystems;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueMode;
 import org.texastorque.torquelib.base.TorqueSubsystem;
+import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
 import org.texastorque.torquelib.util.TorqueMath;
@@ -26,7 +27,7 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
     private ElevatorState state = ElevatorState.OFF;
 
     public enum ElevatorState {
-        MANUAL, EXTEND, RETRACT, OFF;
+        POSITION, EXTEND, RETRACT, OFF;
     }
 
     public void setState(final ElevatorState state) {
@@ -68,20 +69,48 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         hatchDirection = direction;
     }
 
+    private int spikeLevel = 0;
+    private final TorqueClick spikeClick = new TorqueClick();
+    private boolean hasHatch = false;
+
     @Override
     public final void update(final TorqueMode mode) {
         SmartDashboard.putNumber("Climber Lift Position", lift.getPosition());
         SmartDashboard.putString("Lift Dir", liftDirection.toString());
         SmartDashboard.putString("Climber State", state.toString());
+        SmartDashboard.putNumber("Hatch", hatchDirection.get());
 
-        hatch.setPercent(hatchDirection.get());
+        SmartDashboard.putNumber("Current", hatch.getCurrent());
 
-        if (state == ElevatorState.MANUAL) {
+        SmartDashboard.putNumber("Spike", spikeLevel);
+
+        if (hatchDirection == TorqueDirection.FORWARD) {
+            if (spikeClick.calculate(hatch.getCurrent() >= 12))
+                spikeLevel++;
+        } else 
+            spikeLevel = 0;
+
+        if (hatchDirection == TorqueDirection.REVERSE)
+            hasHatch = false;
+
+        if (spikeLevel >= 2 || hasHatch) {
+            hasHatch = true;
+            hatch.setPercent(0);
+        }  else 
+            hatch.setPercent(hatchDirection.get());
+
+
+        if (state == ElevatorState.POSITION) {
             lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
                     * LIFT_MULTIPLIER);
             lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
                     * LIFT_MULTIPLIER);
-
+        } else if (state == ElevatorState.EXTEND) {
+            lift.setPercent(LIFT_MULTIPLIER);
+            lift2.setPercent(-LIFT_MULTIPLIER);
+        } else if (state == ElevatorState.RETRACT) {
+            lift.setPercent(-LIFT_MULTIPLIER);
+            lift2.setPercent(LIFT_MULTIPLIER);
         } else {
             lift.setPercent(0);
             lift2.setPercent(0);
