@@ -137,19 +137,20 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
 
     private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0., -25., -45., -70.);
+    // private final TorqueTraversableSelection<Double> elevatorTune = new TorqueTraversableSelection<Double>(-5., -4., -3., -2., -1., 0., 1., 2., 3., 4., 5.);
     private static final double DIFF = 5;
 
     private final void updateElevator() {
-        if (operator.getDPADDown())
+        if (driver.getDPADDown())
             elevator.setState(ElevatorState.RETRACT);
-        else if (operator.getDPADUp())
+        else if (driver.getDPADUp())
             elevator.setState(ElevatorState.EXTEND);
-        else if (driver.getDPADDown() || driver.getDPADUp()) {
+        else { 
             elevator.setState(ElevatorState.POSITION);
-            elevatorPos.calculate(driver.getDPADDown(), driver.getDPADUp());
+            elevatorPos.calculate(operator.getDPADDown(), /*|| driver.getDPADDown()*/
+                    operator.getDPADUp() /*|| driver.getDPADUp()*/);
+
             elevator.setLiftPos(elevatorPos.get() + (driver.getBButton() ? DIFF : 0));
-        } else {
-            elevator.setState(ElevatorState.OFF);
         }
 
         if (operator.getRightTrigger())

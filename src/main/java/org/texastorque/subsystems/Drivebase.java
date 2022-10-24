@@ -234,10 +234,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 DRIVE_MAX_TRANSLATIONAL_ACCELERATION, DRIVE_FEED_FORWARD);
     }
 
-    public final double getDisplacement() {
-        return frontLeft.getDisplacement();
-    }
-
     public void setDesiredPosition(final Pose2d desired) {
         this.desired = desired;
     }

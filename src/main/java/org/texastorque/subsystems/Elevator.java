@@ -20,7 +20,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public final class Elevator extends TorqueSubsystem implements Subsystems {
     private static volatile Elevator instance;
 
-    public static double LIFT_UP = 108, LIFT_BOTTOM = 0, LIFT_MULTIPLIER = .8, liftPos;
+    public static final double LIFT_UP = -70., LIFT_BOTTOM = 0, LIFT_SPEED = .8;
+
+    private double liftPos;
 
     private final TorqueSparkMax lift, lift2, hatch;
 
@@ -101,16 +103,16 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
 
 
         if (state == ElevatorState.POSITION) {
-            lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
-                    * LIFT_MULTIPLIER);
-            lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
-                    * LIFT_MULTIPLIER);
+            // What the fuck is going on Omar?
+            // This shouldn't really use a Linear Constraint, a clamp would do.
+            lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
+            lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
         } else if (state == ElevatorState.EXTEND) {
-            lift.setPercent(LIFT_MULTIPLIER);
-            lift2.setPercent(-LIFT_MULTIPLIER);
+            lift.setPercent(LIFT_SPEED);
+            lift2.setPercent(-LIFT_SPEED);
         } else if (state == ElevatorState.RETRACT) {
-            lift.setPercent(-LIFT_MULTIPLIER);
-            lift2.setPercent(LIFT_MULTIPLIER);
+            lift.setPercent(-LIFT_SPEED);
+            lift2.setPercent(LIFT_SPEED);
         } else {
             lift.setPercent(0);
             lift2.setPercent(0);
