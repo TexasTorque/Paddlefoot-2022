@@ -191,11 +191,11 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         // field2d.setRobotPose(poseEstimator.getEstimatedPosition());
 
         if (camera.hasTargets()) {
-            Pose2d pose =  camera.getRobotPoseAprilTag(aprilTags, CAMERA_ANGLE.getDegrees(), CAMERA_HEIGHT, gyro.getRotation2dCounterClockwise(), 0);
-            SmartDashboard.putString("AprilPos", String.format("(%02.3f, %02.3f)", pose.getX(), pose.getY()));
+            final Pose2d pose =  camera.getRobotPoseAprilTag(aprilTags, CAMERA_ANGLE.getDegrees(), CAMERA_HEIGHT, 
+                    gyro.getRotation2dCounterClockwise(), 90);
+            SmartDashboard.putString("ApilPos", String.format("(%02.3f, %02.3f)", pose.getX(), pose.getY()));
             aprilField.setRobotPose(pose);
             poseEstimator.addVisionMeasurement(pose, TorqueUtil.time() - camera.getLatency() / 1000.);
-
         }
     }
 
