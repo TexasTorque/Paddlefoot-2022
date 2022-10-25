@@ -47,7 +47,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
             .6, .7),
             rotationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .75, 1.);
 
-    private double invertCoefficient = 1;
+   private double invertCoefficient = 1;
 
     public final void invertDrivebaseControls() {
         invertCoefficient = -1;
@@ -136,22 +136,22 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     }
 
 
-    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0., -25., -45., -70.);
+    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0., 40., 96.);
     // private final TorqueTraversableSelection<Double> elevatorTune = new TorqueTraversableSelection<Double>(-5., -4., -3., -2., -1., 0., 1., 2., 3., 4., 5.);
-    private static final double DIFF = 5;
 
     private final void updateElevator() {
-        if (driver.getDPADDown())
-            elevator.setState(ElevatorState.RETRACT);
-        else if (driver.getDPADUp())
-            elevator.setState(ElevatorState.EXTEND);
-        else { 
-            elevator.setState(ElevatorState.POSITION);
-            elevatorPos.calculate(operator.getDPADDown(), /*|| driver.getDPADDown()*/
-                    operator.getDPADUp() /*|| driver.getDPADUp()*/);
+        // if (driver.getDPADDown())
+        //     elevator.setState(ElevatorState.RETRACT);
+        // else if (driver.getDPADUp())
+        //     elevator.setState(ElevatorState.EXTEND);
+        // else { 
+        //     elevator.setState(ElevatorState.OFF);
+        // }
+        elevator.setState(ElevatorState.POSITION);
+        elevatorPos.calculate(operator.getDPADDown() || driver.getDPADDown(),
+                operator.getDPADUp() || driver.getDPADUp());
 
-            elevator.setLiftPos(elevatorPos.get() + (driver.getBButton() ? DIFF : 0));
-        }
+        elevator.setLiftPos(elevatorPos.get());
 
         if (operator.getRightTrigger())
             elevator.setHatchDirection(TorqueDirection.FORWARD);
