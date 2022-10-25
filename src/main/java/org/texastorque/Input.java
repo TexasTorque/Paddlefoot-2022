@@ -40,9 +40,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         updateElevator();
     }
 
-    private final TorqueTraversableSelection<Double> translationalSpeeds = new TorqueTraversableSelection<Double>(1, .5,
-            .6, .7),
-            rotationalSpeeds = new TorqueTraversableSelection<Double>(1, .5, .75, 1.);
+    private final TorqueTraversableSelection<Double> translationalSpeeds = new TorqueTraversableSelection<Double>(0, 1., .75, .5, .25);
 
    private double invertCoefficient = 1;
 
@@ -69,8 +67,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
         double rotationRequested = -driver.getRightXAxis();
 
-        drivebase.setSpeedCoefs(translationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()),
-                rotationalSpeeds.calculate(driver.getLeftBumper(), driver.getRightBumper()));
+        drivebase.setSpeed(translationalSpeeds.calculate(driver.getRightBumper(), driver.getLeftBumper()));
 
         final boolean noInput = TorqueMath.toleranced(driver.getLeftYAxis(), DEADBAND)
                 && TorqueMath.toleranced(driver.getLeftXAxis(), DEADBAND)
@@ -87,7 +84,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         if (driver.getLeftCenterButton())
             drivebase.state = DrivebaseState.ZERO_WHEELS;
         else if (driver.getYButton())
-            drivebase.state = DrivebaseState.ALIGN_TO_TAG;
+            drivebase.state = DrivebaseState.GOTO_POS_ODOM;
         else if (noInput) drivebase.state = DrivebaseState.OFF;
         else {
             drivebase.state = DrivebaseState.DRIVING;
@@ -109,7 +106,6 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         SmartDashboard.putNumber("X Velo", xVelo);
         SmartDashboard.putNumber("Y Velo", yVelo);
         SmartDashboard.putNumber("R Velo", rVelo);
-        SmartDashboard.putNumber("Speed Shifter", (rotationalSpeeds.get() - .5) * 2.);
         SmartDashboard.putNumber("PID O", rotationRequested);
         SmartDashboard.putNumber("Rot Delta", rotationReal - lastRotation);
     }
@@ -134,16 +130,8 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
 
     private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0., 40., 96.);
-    // private final TorqueTraversableSelection<Double> elevatorTune = new TorqueTraversableSelection<Double>(-5., -4., -3., -2., -1., 0., 1., 2., 3., 4., 5.);
 
     private final void updateElevator() {
-        // if (driver.getDPADDown())
-        //     elevator.setState(ElevatorState.RETRACT);
-        // else if (driver.getDPADUp())
-        //     elevator.setState(ElevatorState.EXTEND);
-        // else { 
-        //     elevator.setState(ElevatorState.OFF);
-        // }
         elevator.setState(ElevatorState.POSITION);
         elevatorPos.calculate(operator.getDPADDown() || driver.getDPADDown(),
                 operator.getDPADUp() || driver.getDPADUp());

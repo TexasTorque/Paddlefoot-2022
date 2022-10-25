@@ -36,7 +36,6 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
 
     public void setState(final ElevatorState state) {
         this.state = state;
-
     }
 
     private TorqueDirection liftDirection = TorqueDirection.OFF, hatchDirection = TorqueDirection.OFF;
@@ -85,9 +84,7 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Lift Dir", liftDirection.toString());
         SmartDashboard.putString("Climber State", state.toString());
         SmartDashboard.putNumber("Hatch", hatchDirection.get());
-
         SmartDashboard.putNumber("Current", hatch.getCurrent());
-
         SmartDashboard.putNumber("Spike", spikeLevel);
 
         if (hatchDirection == TorqueDirection.FORWARD) {

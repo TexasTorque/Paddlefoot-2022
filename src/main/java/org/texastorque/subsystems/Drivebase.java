@@ -35,7 +35,9 @@ import org.texastorque.Ports;
 import org.texastorque.Subsystems;
 import org.texastorque.torquelib.base.TorqueMode;
 import org.texastorque.torquelib.base.TorqueSubsystem;
+import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
+import org.texastorque.torquelib.control.TorqueTimeout;
 import org.texastorque.torquelib.modules.TorqueSwerveModule2021;
 import org.texastorque.torquelib.sensors.TorqueLight;
 import org.texastorque.torquelib.sensors.TorqueNavXGyro;
@@ -55,8 +57,8 @@ import org.texastorque.torquelib.util.TorqueUtil;
 public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static volatile Drivebase instance;
 
-    public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 25, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 25, // TEST NEW MAX SPEEDS
-            DRIVE_MAX_ROTATIONAL_SPEED = 25 * Math.PI, TOLERANCE = 7, ROCKET_X_OFFSET = 5, ROCKET_Y_OFFSET = 5;
+    public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 4, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 4, // TEST NEW MAX SPEEDS
+            DRIVE_MAX_ROTATIONAL_SPEED = 4 * Math.PI;
 
     // These are constants for our specifics swerve modules
     private static final double DRIVE_GEARING = .1875, // Drive rotations per motor rotations
@@ -104,8 +106,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private ChassisSpeeds speeds = new ChassisSpeeds(0, 0, 0);
     // The instance of the NavX
     private final TorqueNavXGyro gyro = TorqueNavXGyro.getInstance();
-    // Translation and rotation coefs for the speed shifter
-    private double translationalSpeedCoef, rotationalSpeedCoef;
+    // Coef for the speed shifter
+    private double speed = 1;
     // The field representation of the robot for logging
     private final Field2d aprilField = new Field2d();
     // A table of April tags by ID and their positions
@@ -119,7 +121,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     public enum DrivebaseState {
         OFF,
         DRIVING,
-        ALIGN_TO_TAG,
+        GOTO_POS_ODOM,
         ZERO_WHEELS
     } 
     public DrivebaseState state;
@@ -166,9 +168,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         stopMoving();
     }
 
-    public final void setSpeedCoefs(final double translational, final double rotational) {
-        this.translationalSpeedCoef = translational;
-        this.rotationalSpeedCoef = rotational;
+    public final void setSpeed(final double speed) {
+        this.speed = speed;
     }
 
     public final void setSpeeds(final ChassisSpeeds speeds) {
@@ -202,6 +203,9 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static final Rotation2d CAMERA_ANGLE = new Rotation2d(0); // from which way?
     private static final double CAMERA_HEIGHT = Units.inchesToMeters(33); 
 
+    private final TorqueClick creepClick = new TorqueClick();
+    private final TorqueTimeout creepTimeout = new TorqueTimeout(0.4);
+
     @Override
     public final void update(final TorqueMode mode) {
         camera.update();
@@ -213,18 +217,18 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         if (state == DrivebaseState.ZERO_WHEELS) {
             zeroWheels();
         } else {
-            if (elevator.isOutaking()) 
+            if (creepTimeout.calculate(creepClick.calculate(elevator.isOutaking())))
                 elevatorCreep();
             else if (state == DrivebaseState.DRIVING)
                 normalDriving(mode);
-            else if (state == DrivebaseState.ALIGN_TO_TAG)
+            else if (state == DrivebaseState.GOTO_POS_ODOM)
                 alignToTag();
             else
                 stopMoving();
 
             swerveModuleStates = kinematics.toSwerveModuleStates(speeds);
             SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
-                    DRIVE_MAX_TRANSLATIONAL_SPEED);
+                    DRIVE_MAX_TRANSLATIONAL_SPEED * speed);
 
             frontLeft.setDesiredState(swerveModuleStates[0]);
             frontRight.setDesiredState(swerveModuleStates[1]);
@@ -240,13 +244,11 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     }
 
     public final void normalDriving(final TorqueMode mode) {
-        final double maxTranslatingSpeed = translationalSpeedCoef * DRIVE_MAX_TRANSLATIONAL_SPEED;
-        final double maxRotationalSpeed = rotationalSpeedCoef * DRIVE_MAX_ROTATIONAL_SPEED;
-
         if (mode.isTeleop())
-            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond * maxTranslatingSpeed,
-                    speeds.vyMetersPerSecond * maxTranslatingSpeed,
-                    speeds.omegaRadiansPerSecond * maxRotationalSpeed,
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+                    speeds.vxMetersPerSecond * DRIVE_MAX_TRANSLATIONAL_SPEED,
+                    speeds.vyMetersPerSecond * DRIVE_MAX_TRANSLATIONAL_SPEED,
+                    speeds.omegaRadiansPerSecond * DRIVE_MAX_ROTATIONAL_SPEED,
                     gyro.getRotation2dClockwise());
 
     }
