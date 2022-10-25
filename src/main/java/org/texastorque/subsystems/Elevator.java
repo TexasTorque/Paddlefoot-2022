@@ -6,6 +6,7 @@
 
 package org.texastorque.subsystems;
 
+import org.texastorque.Input;
 import org.texastorque.Ports;
 import org.texastorque.Subsystems;
 import org.texastorque.torquelib.base.TorqueDirection;
@@ -13,6 +14,7 @@ import org.texastorque.torquelib.base.TorqueMode;
 import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
+import org.texastorque.torquelib.control.TorqueTimeout;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
 import org.texastorque.torquelib.util.TorqueMath;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -20,7 +22,9 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public final class Elevator extends TorqueSubsystem implements Subsystems {
     private static volatile Elevator instance;
 
-    public static double LIFT_UP = 108, LIFT_BOTTOM = 0, LIFT_MULTIPLIER = .8, liftPos;
+    public static final double LIFT_UP = 108., LIFT_BOTTOM = 0, LIFT_SPEED = .8;
+
+    private double liftPos;
 
     private final TorqueSparkMax lift, lift2, hatch;
 
@@ -73,6 +77,8 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
     private final TorqueClick spikeClick = new TorqueClick();
     private boolean hasHatch = false;
 
+    private TorqueTimeout rumbleTimeout = new TorqueTimeout(1);
+
     @Override
     public final void update(final TorqueMode mode) {
         SmartDashboard.putNumber("Climber Lift Position", lift.getPosition());
@@ -99,24 +105,32 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         }  else 
             hatch.setPercent(hatchDirection.get());
 
+        final boolean rumble = rumbleTimeout.calculate(hasHatch);
+
+        Input.getInstance().getDriver().setRumble(rumble);
+        Input.getInstance().getOperator().setRumble(rumble);
+
 
         if (state == ElevatorState.POSITION) {
-            lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
-                    * LIFT_MULTIPLIER);
-            lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP)
-                    * LIFT_MULTIPLIER);
+            SmartDashboard.putNumber("ReqLPos", liftPos);
+            lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
+            lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
         } else if (state == ElevatorState.EXTEND) {
-            lift.setPercent(LIFT_MULTIPLIER);
-            lift2.setPercent(-LIFT_MULTIPLIER);
+            lift.setPercent(LIFT_SPEED);
+            lift2.setPercent(-LIFT_SPEED);
         } else if (state == ElevatorState.RETRACT) {
-            lift.setPercent(-LIFT_MULTIPLIER);
-            lift2.setPercent(LIFT_MULTIPLIER);
+            lift.setPercent(-LIFT_SPEED);
+            lift2.setPercent(LIFT_SPEED);
         } else {
             lift.setPercent(0);
             lift2.setPercent(0);
         }
 
         hatchDirection = TorqueDirection.OFF;
+    }
+
+    public boolean isOutaking() {
+        return hatchDirection == TorqueDirection.REVERSE;
     }
 
     public static final synchronized Elevator getInstance() {

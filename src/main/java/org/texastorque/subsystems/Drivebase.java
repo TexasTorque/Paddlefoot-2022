@@ -213,7 +213,9 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         if (state == DrivebaseState.ZERO_WHEELS) {
             zeroWheels();
         } else {
-            if (state == DrivebaseState.DRIVING)
+            if (elevator.isOutaking()) 
+                elevatorCreep();
+            else if (state == DrivebaseState.DRIVING)
                 normalDriving(mode);
             else if (state == DrivebaseState.ALIGN_TO_TAG)
                 alignToTag();
@@ -231,6 +233,10 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         }
 
         log();
+    }
+
+    public void elevatorCreep() {
+        speeds = new ChassisSpeeds(0, -2, 0);
     }
 
     public final void normalDriving(final TorqueMode mode) {
@@ -303,10 +309,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         return new TorqueSwerveModule2021(id, drivePort, rotatePort, DRIVE_GEARING, DRIVE_WHEEL_RADIUS, DRIVE_PID,
                 ROTATE_PID, DRIVE_MAX_TRANSLATIONAL_SPEED,
                 DRIVE_MAX_TRANSLATIONAL_ACCELERATION, DRIVE_FEED_FORWARD);
-    }
-
-    public final double getDisplacement() {
-        return frontLeft.getDisplacement();
     }
 
     public void setDesiredPosition(final Pose2d desired) {
