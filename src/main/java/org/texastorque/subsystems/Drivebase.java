@@ -111,7 +111,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     // The field representation of the robot for logging
     private final Field2d aprilField = new Field2d();
     // A table of April tags by ID and their positions
-    private final Map<Integer, Pose3d> aprilTags;
+    private final Map<Integer, Pose3d> knownTags;
 
     // The TorqueLight object
     private final TorqueLight camera;
@@ -158,9 +158,9 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         // Putting the aprilField object to Shuffleboard
         SmartDashboard.putData("April Position", aprilField);
 
-        aprilTags = new HashMap<Integer, Pose3d>();
-        aprilTags.put(0, new Pose3d(6.6, 3.4, 1.6002, new Rotation3d(0, 0, 15)));
-        aprilTags.put(69, new Pose3d(9, 2.45, 1.6002, new Rotation3d(0, 0, 105)));
+        knownTags = new HashMap<Integer, Pose3d>();
+        knownTags.put(0, new Pose3d(6.6, 3.4, 1.6002, new Rotation3d(0, 0, 15)));
+        knownTags.put(69, new Pose3d(9, 2.45, 1.6002, new Rotation3d(0, 0, 105)));
         //aprilTags = TorqueAprilTagMap.fromJSON();
 
         camera = new TorqueLight();
@@ -192,7 +192,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         // field2d.setRobotPose(poseEstimator.getEstimatedPosition());
 
         if (camera.hasTargets()) {
-            final Pose2d pose =  camera.getRobotPoseAprilTag(aprilTags, CAMERA_ANGLE.getDegrees(), CAMERA_HEIGHT, 
+            final Pose2d pose =  camera.getRobotPoseAprilTag(knownTags, CAMERA_ANGLE.getDegrees(), CAMERA_HEIGHT, 
                     gyro.getRotation2dCounterClockwise(), 90);
             SmartDashboard.putString("ApilPos", String.format("(%02.3f, %02.3f)", pose.getX(), pose.getY()));
             aprilField.setRobotPose(pose);
@@ -200,7 +200,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         }
     }
 
-    private static final Rotation2d CAMERA_ANGLE = new Rotation2d(0); // from which way?
+    private static final Rotation2d CAMERA_ANGLE = new Rotation2d(0);
     private static final double CAMERA_HEIGHT = Units.inchesToMeters(33); 
 
     private final TorqueClick creepClick = new TorqueClick();
@@ -222,7 +222,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
             else if (state == DrivebaseState.DRIVING)
                 normalDriving(mode);
             else if (state == DrivebaseState.GOTO_POS_ODOM)
-                alignToTag();
+                gotoDesiredPosition();
             else
                 stopMoving();
 
@@ -240,7 +240,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     }
 
     public void elevatorCreep() {
-        speeds = new ChassisSpeeds(0, -2, 0);
+        speeds = new ChassisSpeeds(0, -DRIVE_MAX_TRANSLATIONAL_SPEED / 12., 0);
     }
 
     public final void normalDriving(final TorqueMode mode) {
@@ -253,7 +253,15 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     }
 
-    public final void alignToTag() {
+    public final void gotoDesiredPosition() {
+        final ChassisSpeeds adjustedSpeeds = controller.calculate(
+                getPose(), desired, 0,
+                Rotation2d.fromDegrees(0));
+        adjustedSpeeds.vxMetersPerSecond *= -1;
+        speeds = adjustedSpeeds;
+    }
+
+    public final void gotoNearestAprilTag() {
 
         final ChassisSpeeds adjustedSpeeds = controller.calculate(
                 getPose(), desired, 0,
