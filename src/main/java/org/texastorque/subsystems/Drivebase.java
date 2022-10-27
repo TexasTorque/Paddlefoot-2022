@@ -110,6 +110,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private double speed = 1;
     // The field representation of the robot for logging
     private final Field2d aprilField = new Field2d();
+    private final Field2d odomField = new Field2d();
     // A table of April tags by ID and their positions
     private final Map<Integer, Pose3d> knownTags;
 
@@ -157,11 +158,10 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
         // Putting the aprilField object to Shuffleboard
         SmartDashboard.putData("April Position", aprilField);
+        SmartDashboard.putData("Odom Position", odomField);
 
-        knownTags = new HashMap<Integer, Pose3d>();
-        knownTags.put(0, new Pose3d(6.6, 3.4, 1.6002, new Rotation3d(0, 0, 15)));
-        knownTags.put(69, new Pose3d(9, 2.45, 1.6002, new Rotation3d(0, 0, 105)));
-        //aprilTags = TorqueAprilTagMap.fromJSON();
+        knownTags = TorqueAprilTagMap.fromJSON();
+        System.out.println(knownTags);
 
         camera = new TorqueLight();
 
@@ -189,7 +189,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         poseEstimator.update(gyro.getRotation2dClockwise().times(-1),
                 frontLeft.getState(), frontRight.getState(),
                 backLeft.getState(), backRight.getState());
-        // field2d.setRobotPose(poseEstimator.getEstimatedPosition());
+        odomField.setRobotPose(poseEstimator.getEstimatedPosition());
 
         if (camera.hasTargets()) {
             final Pose2d pose =  camera.getRobotPoseAprilTag(knownTags, CAMERA_ANGLE.getDegrees(), CAMERA_HEIGHT, 
@@ -240,7 +240,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     }
 
     public void elevatorCreep() {
-        speeds = new ChassisSpeeds(0, -DRIVE_MAX_TRANSLATIONAL_SPEED / 12., 0);
+        speeds = new ChassisSpeeds(0, -DRIVE_MAX_TRANSLATIONAL_SPEED / 6., 0);
     }
 
     public final void normalDriving(final TorqueMode mode) {
