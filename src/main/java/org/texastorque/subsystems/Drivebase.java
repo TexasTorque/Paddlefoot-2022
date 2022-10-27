@@ -186,6 +186,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     }
 
     public final void updateFeedback() {
+        System.out.println("April Tag Found");
         poseEstimator.update(gyro.getRotation2dClockwise().times(-1),
                 frontLeft.getState(), frontRight.getState(),
                 backLeft.getState(), backRight.getState());
@@ -194,9 +195,11 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         if (camera.hasTargets()) {
             final Pose2d pose =  camera.getRobotPoseAprilTag(knownTags, CAMERA_ANGLE.getDegrees(), CAMERA_HEIGHT, 
                     gyro.getRotation2dCounterClockwise(), 90);
-            SmartDashboard.putString("ApilPos", String.format("(%02.3f, %02.3f)", pose.getX(), pose.getY()));
-            aprilField.setRobotPose(pose);
-            poseEstimator.addVisionMeasurement(pose, TorqueUtil.time() - camera.getLatency() / 1000.);
+            if (pose != null){
+                SmartDashboard.putString("ApilPos", String.format("(%02.3f, %02.3f)", pose.getX(), pose.getY()));
+                aprilField.setRobotPose(pose);
+                poseEstimator.addVisionMeasurement(pose, TorqueUtil.time() - camera.getLatency() / 1000.);
+            }
         }
     }
 
