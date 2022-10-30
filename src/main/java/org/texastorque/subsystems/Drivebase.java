@@ -185,15 +185,27 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         stopMoving();
     }
 
+
+    private SwerveModuleState invertedSwerveModuleState(final SwerveModuleState state) {
+        state.angle = state.angle.times(-1);
+        return state;
+    }
+
     public final void updateFeedback() {
+
+        frontLeft.getState().angle.times(-1);
+
         poseEstimator.update(gyro.getRotation2dClockwise().times(-1),
-                frontLeft.getState(), frontRight.getState(),
-                backLeft.getState(), backRight.getState());
+                invertedSwerveModuleState(frontLeft.getState()),
+                invertedSwerveModuleState(frontRight.getState()),
+                invertedSwerveModuleState(backLeft.getState()), 
+                invertedSwerveModuleState(backRight.getState())
+        );
         odomField.setRobotPose(poseEstimator.getEstimatedPosition());
 
-        if (camera.hasTargets()) {
-            final Pose2d pose =  camera.getRobotPoseAprilTag(knownTags, CAMERA_ANGLE.getDegrees(), CAMERA_HEIGHT, 
-                    gyro.getRotation2dCounterClockwise(), 90);
+        // if (camera.hasTargets()) {
+        if (6 == 7) {
+            final Pose2d pose =  camera.getRobotPoseAprilTag2d(knownTags); 
             SmartDashboard.putString("ApilPos", String.format("(%02.3f, %02.3f)", pose.getX(), pose.getY()));
             aprilField.setRobotPose(pose);
             poseEstimator.addVisionMeasurement(pose, TorqueUtil.time() - camera.getLatency() / 1000.);
