@@ -30,8 +30,14 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
         operator = new GenericController(1, .1);
     }
 
+    private boolean single = false;
+    private final TorqueClick singleClick = new TorqueClick();
+
     @Override
     public final void update() {
+        if (singleClick.calculate(driver.getBButton()))
+            single = !single;
+
         updateDrivebase();
         updateElevator();
     }
@@ -57,6 +63,8 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
     private final static double DEADBAND = .04;
 
+
+
     private final void updateDrivebase() {
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
         double rotationRequested = -driver.getRightXAxis();
@@ -67,7 +75,7 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
                 && TorqueMath.toleranced(driver.getLeftXAxis(), DEADBAND)
                 && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND);
 
-        if (driver.getLeftCenterButton())
+        if (driver.getXButton())
             drivebase.state = DrivebaseState.ZERO_WHEELS;
         else if (driver.getYButton())
             drivebase.state = DrivebaseState.GOTO_POS_ODOM;
@@ -94,14 +102,14 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
     private final void updateElevator() {
         elevator.setState(ElevatorState.POSITION);
-        elevatorPos.calculate(operator.getDPADDown() || driver.getDPADDown(),
-                operator.getDPADUp() || driver.getDPADUp());
+        elevatorPos.calculate(operator.getDPADDown() || (single && driver.getDPADDown()),
+                operator.getDPADUp() || (single && driver.getDPADUp()));
 
         elevator.setLiftPos(elevatorPos.get());
 
-        if (operator.getRightTrigger())
+        if (operator.getRightTrigger() || (single && driver.getRightTrigger()))
             elevator.setHatchDirection(TorqueDirection.FORWARD);
-        else if (operator.getLeftTrigger())
+        else if (operator.getLeftTrigger() || (single && driver.getLeftTrigger()))
             elevator.setHatchDirection(TorqueDirection.REVERSE);
         else
             elevator.setHatchDirection(TorqueDirection.OFF);

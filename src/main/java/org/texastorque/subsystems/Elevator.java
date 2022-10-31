@@ -17,6 +17,9 @@ import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueTimeout;
 import org.texastorque.torquelib.motors.TorqueSparkMax;
 import org.texastorque.torquelib.util.TorqueMath;
+
+import edu.wpi.first.wpilibj.PneumaticsModuleType;
+import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class Elevator extends TorqueSubsystem implements Subsystems {
@@ -40,6 +43,8 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
 
     private TorqueDirection liftDirection = TorqueDirection.OFF, hatchDirection = TorqueDirection.OFF;
 
+    private final Solenoid sole;
+
     private Elevator() {
         lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.RIGHT);
         lift2 = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
@@ -47,6 +52,8 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
 
         lift.configurePID(TorquePID.create(.2).build());
         lift2.configurePID(TorquePID.create(.2).build());
+
+        sole = new Solenoid(PneumaticsModuleType.REVPH, 0);
     }
 
     @Override
@@ -102,11 +109,12 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         }  else 
             hatch.setPercent(hatchDirection.get());
 
+        sole.set(hatchDirection == TorqueDirection.REVERSE);
+
         final boolean rumble = rumbleTimeout.calculate(hasHatch);
 
         Input.getInstance().getDriver().setRumble(rumble);
         Input.getInstance().getOperator().setRumble(rumble);
-
 
         if (state == ElevatorState.POSITION) {
             SmartDashboard.putNumber("ReqLPos", liftPos);

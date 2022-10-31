@@ -222,8 +222,6 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     public final void update(final TorqueMode mode) {
         camera.update();
 
-        // odometry.update(gyro.getRotation2dClockwise().times(-1), frontLeft.getState(), frontRight.getState(),
-        //         backLeft.getState(), backRight.getState());
         updateFeedback();
 
         if (state == DrivebaseState.ZERO_WHEELS) {
@@ -302,8 +300,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         return poseEstimator.getEstimatedPosition();
     }
 
-    public final TorqueNavXGyro getGyro() {
-        return gyro;
+    public final TorqueNavXGyro getGyro() { 
+        return gyro; 
     }
 
     public final void log() {
