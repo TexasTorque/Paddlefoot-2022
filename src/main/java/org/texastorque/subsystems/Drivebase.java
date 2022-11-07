@@ -201,6 +201,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                 invertedSwerveModuleState(backLeft.getState()), 
                 invertedSwerveModuleState(backRight.getState())
         );
+
         odomField.setRobotPose(poseEstimator.getEstimatedPosition());
 
         // if (camera.hasTargets()) {
@@ -220,6 +221,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     @Override
     public final void update(final TorqueMode mode) {
+
         camera.update();
 
         updateFeedback();
@@ -295,6 +297,10 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
     //     return odometry;
     // }
 
+    public final SwerveDrivePoseEstimator getPoseEstimator() {
+        return poseEstimator;
+    }
+
     public final Pose2d getPose() {
         // return odometry.getPoseMeters();
         return poseEstimator.getEstimatedPosition();
@@ -337,6 +343,10 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
     public Pose2d getDesired() {
         return desired;
+    }
+
+    public final void reset() {
+        state = DrivebaseState.OFF;
     }
 
     public static final synchronized Drivebase getInstance() {
