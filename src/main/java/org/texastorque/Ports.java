@@ -30,16 +30,6 @@ public final class Ports {
         }
     }
 
-    public static final class INTAKE {
-        public static final int ROTARY = 12;
-        public static final int ROLLER = 13;
-    }
-
-    public static final class MAGAZINE {
-        public static final int BELT = 18;
-        public static final int GATE = 17;
-    }
-
     public static final class SHOOTER {
         public static final int HOOD = 16;
         public static final class FLYWHEEL {
