@@ -57,11 +57,11 @@ import org.texastorque.torquelib.util.TorqueUtil;
 public final class Drivebase extends TorqueSubsystem implements Subsystems {
     private static volatile Drivebase instance;
 
-    public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 4, DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 4, // TEST NEW MAX SPEEDS
+    public static final double DRIVE_MAX_TRANSLATIONAL_SPEED = 12., DRIVE_MAX_TRANSLATIONAL_ACCELERATION = 8., // TEST NEW MAX SPEEDS
             DRIVE_MAX_ROTATIONAL_SPEED = 4 * Math.PI;
 
     // These are constants for our specifics swerve modules
-    private static final double DRIVE_GEARING = .1875, // Drive rotations per motor rotations
+    private static final double DRIVE_GEARING = 1. / 8.31, // Drive rotations per motor rotations
             DRIVE_WHEEL_RADIUS = Units.inchesToMeters(1.788), DISTANCE_TO_CENTER_X = Units.inchesToMeters(10.875),
             DISTANCE_TO_CENTER_Y = Units.inchesToMeters(10.875);
     public static final TorquePID DRIVE_PID = TorquePID.create(.00048464).addIntegralZone(.2).build();

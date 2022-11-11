@@ -12,6 +12,6 @@ import org.texastorque.torquelib.auto.TorqueSequence;
 
 public final class Drive extends TorqueSequence {
     public Drive() { 
-        addBlock(new TorqueBlock(new Path("Jacob", true, 4, 2))); 
+        addBlock(new TorqueBlock(new Path("Jacob", true, 2, 1))); 
     }
 }

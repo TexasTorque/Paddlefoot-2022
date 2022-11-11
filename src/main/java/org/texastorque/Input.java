@@ -17,17 +17,18 @@ import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueSlewLimiter;
 import org.texastorque.torquelib.control.TorqueTraversableSelection;
+import org.texastorque.torquelib.sensors.TorqueController;
 import org.texastorque.torquelib.util.GenericController;
 import org.texastorque.torquelib.util.TorqueMath;
 import org.texastorque.torquelib.util.TorqueUtil;
 
 @SuppressWarnings("deprecation")
-public final class Input extends TorqueInput<GenericController> implements Subsystems {
+public final class Input extends TorqueInput<TorqueController> implements Subsystems {
     private static volatile Input instance;
 
     private Input() {
-        driver = new GenericController(0, .1);
-        operator = new GenericController(1, .1);
+        driver = new TorqueController(0, DEADBAND);
+        operator = new TorqueController(1, DEADBAND);
     }
 
     private boolean single = false;
@@ -61,29 +62,31 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
     private final TorqueSlewLimiter xLimiter = new TorqueSlewLimiter(5, 10),
             yLimiter = new TorqueSlewLimiter(5, 10);
 
-    private final static double DEADBAND = .04;
-
-
+    private final static double DEADBAND = .1;
 
     private final void updateDrivebase() {
         final double rotationReal = drivebase.getGyro().getRotation2d().getDegrees();
         double rotationRequested = -driver.getRightXAxis();
 
+        SmartDashboard.putNumber("ROTREQ", rotationRequested);
+
         drivebase.setSpeed(translationalSpeeds.calculate(driver.getRightBumper(), driver.getLeftBumper()));
 
-        final boolean noInput = TorqueMath.toleranced(driver.getLeftYAxis(), DEADBAND)
-                && TorqueMath.toleranced(driver.getLeftXAxis(), DEADBAND)
-                && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND);
+        // final boolean noInput = TorqueMath.toleranced(driver.getLeftYAxis(), DEADBAND)
+        //         && TorqueMath.toleranced(driver.getLeftXAxis(), DEADBAND)
+        //         && TorqueMath.toleranced(driver.getRightXAxis(), DEADBAND);
 
-        if (driver.getXButton())
+        final boolean noInput = driver.getLeftXAxis() == 0 && driver.getLeftYAxis() == 0 && driver.getRightXAxis() == 0;
+
+        if (driver.isXButtonDown())
             drivebase.state = DrivebaseState.ZERO_WHEELS;
-        else if (driver.getYButton())
-            drivebase.state = DrivebaseState.GOTO_POS_ODOM;
+        // else if (driver.isYButtonDown()())
+            // drivebase.state = DrivebaseState.GOTO_POS_ODOM;
         else if (noInput) drivebase.state = DrivebaseState.OFF;
         else {
             drivebase.state = DrivebaseState.DRIVING;
 
-            if (rotationRequested == 0)
+            if (Math.abs(rotationRequested) < .02)
                 rotationRequested = -rotationPID.calculate(rotationReal, lastRotation);
             else
                 lastRotation = rotationReal;
@@ -102,14 +105,14 @@ public final class Input extends TorqueInput<GenericController> implements Subsy
 
     private final void updateElevator() {
         elevator.setState(ElevatorState.POSITION);
-        elevatorPos.calculate(operator.getDPADDown() || (single && driver.getDPADDown()),
-                operator.getDPADUp() || (single && driver.getDPADUp()));
+        elevatorPos.calculate(operator.isDPADDownDown() || (single && driver.isDPADDownDown()),
+                operator.isDPADUpDown() || (single && driver.isDPADUpDown()));
 
         elevator.setLiftPos(elevatorPos.get());
 
-        if (operator.getRightTrigger() || (single && driver.getRightTrigger()))
+        if (operator.isRightTriggerDown() || (single && driver.isRightTriggerDown()))
             elevator.setHatchDirection(TorqueDirection.FORWARD);
-        else if (operator.getLeftTrigger() || (single && driver.getLeftTrigger()))
+        else if (operator.isLeftTriggerDown() || (single && driver.isLeftTriggerDown()))
             elevator.setHatchDirection(TorqueDirection.REVERSE);
         else
             elevator.setHatchDirection(TorqueDirection.OFF);

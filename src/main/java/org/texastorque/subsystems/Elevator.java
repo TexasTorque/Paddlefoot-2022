@@ -116,20 +116,20 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         Input.getInstance().getDriver().setRumble(rumble);
         Input.getInstance().getOperator().setRumble(rumble);
 
-        if (state == ElevatorState.POSITION) {
-            SmartDashboard.putNumber("ReqLPos", liftPos);
-            lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
-            lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
-        } else if (state == ElevatorState.EXTEND) {
-            lift.setPercent(LIFT_SPEED);
-            lift2.setPercent(-LIFT_SPEED);
-        } else if (state == ElevatorState.RETRACT) {
-            lift.setPercent(-LIFT_SPEED);
-            lift2.setPercent(LIFT_SPEED);
-        } else {
+        // if (state == ElevatorState.POSITION) {
+        //     SmartDashboard.putNumber("ReqLPos", liftPos);
+        //     lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
+        //     lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
+        // } else if (state == ElevatorState.EXTEND) {
+        //     lift.setPercent(LIFT_SPEED);
+        //     lift2.setPercent(-LIFT_SPEED);
+        // } else if (state == ElevatorState.RETRACT) {
+        //     lift.setPercent(-LIFT_SPEED);
+        //     lift2.setPercent(LIFT_SPEED);
+        // } else {
             lift.setPercent(0);
             lift2.setPercent(0);
-        }
+        // }
 
         hatchDirection = TorqueDirection.OFF;
     }
