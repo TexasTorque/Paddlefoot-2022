@@ -29,7 +29,7 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
 
     private double liftPos;
 
-    private final TorqueSparkMax lift, lift2, hatch;
+    private final TorqueSparkMax lift, lift2;
 
     private ElevatorState state = ElevatorState.OFF;
 
@@ -41,19 +41,12 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         this.state = state;
     }
 
-    private TorqueDirection liftDirection = TorqueDirection.OFF, hatchDirection = TorqueDirection.OFF;
-
-    private final Solenoid sole;
+    private TorqueDirection liftDirection = TorqueDirection.OFF;
 
     private Elevator() {
         lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.RIGHT);
         lift2 = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
-        hatch = new TorqueSparkMax(Ports.CLIMBER.HATCH);
 
-        lift.configurePID(TorquePID.create(.2).build());
-        lift2.configurePID(TorquePID.create(.2).build());
-
-        sole = new Solenoid(PneumaticsModuleType.REVPH, 0);
     }
 
     @Override
@@ -75,47 +68,12 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         liftPos = position;
     }
 
-    public void setHatchDirection(TorqueDirection direction) {
-        hatchDirection = direction;
-    }
-
-    private int spikeLevel = 0;
-    private final TorqueClick spikeClick = new TorqueClick();
-    private boolean hasHatch = false;
-
-    private TorqueTimeout rumbleTimeout = new TorqueTimeout(1);
-
     @Override
     public final void update(final TorqueMode mode) {
         SmartDashboard.putNumber("Climber Lift Position", lift.getPosition());
         SmartDashboard.putString("Lift Dir", liftDirection.toString());
         SmartDashboard.putString("Climber State", state.toString());
-        SmartDashboard.putNumber("Hatch", hatchDirection.get());
-        SmartDashboard.putNumber("Current", hatch.getCurrent());
-        SmartDashboard.putNumber("Spike", spikeLevel);
-
-        if (hatchDirection == TorqueDirection.FORWARD) {
-            if (spikeClick.calculate(hatch.getCurrent() >= 12))
-                spikeLevel++;
-        } else 
-            spikeLevel = 0;
-
-        if (hatchDirection == TorqueDirection.REVERSE)
-            hasHatch = false;
-
-        if (spikeLevel >= 2 || hasHatch) {
-            hasHatch = true;
-            hatch.setPercent(0);
-        }  else 
-            hatch.setPercent(hatchDirection.get());
-
-        sole.set(hatchDirection == TorqueDirection.REVERSE);
-
-        final boolean rumble = rumbleTimeout.calculate(hasHatch);
-
-        Input.getInstance().getDriver().setRumble(rumble);
-        Input.getInstance().getOperator().setRumble(rumble);
-
+      
         // if (state == ElevatorState.POSITION) {
         //     SmartDashboard.putNumber("ReqLPos", liftPos);
         //     lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
@@ -130,12 +88,6 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
             lift.setPercent(0);
             lift2.setPercent(0);
         // }
-
-        hatchDirection = TorqueDirection.OFF;
-    }
-
-    public boolean isOutaking() {
-        return hatchDirection == TorqueDirection.REVERSE;
     }
 
     public static final synchronized Elevator getInstance() {

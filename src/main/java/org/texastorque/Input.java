@@ -10,6 +10,8 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import org.texastorque.subsystems.Elevator.ElevatorState;
+import org.texastorque.subsystems.Claw.ClawMode;
+import org.texastorque.subsystems.Claw.ClawState;
 import org.texastorque.subsystems.Drivebase.DrivebaseState;
 import org.texastorque.torquelib.base.TorqueDirection;
 import org.texastorque.torquelib.base.TorqueInput;
@@ -22,7 +24,7 @@ import org.texastorque.torquelib.util.GenericController;
 import org.texastorque.torquelib.util.TorqueMath;
 import org.texastorque.torquelib.util.TorqueUtil;
 
-@SuppressWarnings("deprecation")
+// @SuppressWarnings("deprecation")
 public final class Input extends TorqueInput<TorqueController> implements Subsystems {
     private static volatile Input instance;
 
@@ -36,11 +38,12 @@ public final class Input extends TorqueInput<TorqueController> implements Subsys
 
     @Override
     public final void update() {
-        if (singleClick.calculate(driver.getBButton()))
+        if (singleClick.calculate(driver.isBButtonDown()))
             single = !single;
 
         updateDrivebase();
         updateElevator();
+        updateClaw();
     }
 
     private final TorqueTraversableSelection<Double> translationalSpeeds = new TorqueTraversableSelection<Double>(0, 1., .75, .5, .25);
@@ -70,7 +73,7 @@ public final class Input extends TorqueInput<TorqueController> implements Subsys
 
         SmartDashboard.putNumber("ROTREQ", rotationRequested);
 
-        drivebase.setSpeed(translationalSpeeds.calculate(driver.getRightBumper(), driver.getLeftBumper()));
+        drivebase.setSpeed(translationalSpeeds.calculate(driver.isRightBumperDown(), driver.isLeftBumperDown()));
 
         // final boolean noInput = TorqueMath.toleranced(driver.getLeftYAxis(), DEADBAND)
         //         && TorqueMath.toleranced(driver.getLeftXAxis(), DEADBAND)
@@ -109,13 +112,33 @@ public final class Input extends TorqueInput<TorqueController> implements Subsys
                 operator.isDPADUpDown() || (single && driver.isDPADUpDown()));
 
         elevator.setLiftPos(elevatorPos.get());
+    }
 
-        if (operator.isRightTriggerDown() || (single && driver.isRightTriggerDown()))
-            elevator.setHatchDirection(TorqueDirection.FORWARD);
-        else if (operator.isLeftTriggerDown() || (single && driver.isLeftTriggerDown()))
-            elevator.setHatchDirection(TorqueDirection.REVERSE);
-        else
-            elevator.setHatchDirection(TorqueDirection.OFF);
+    public final void updateClaw() {
+        final boolean rightTrigger = operator.isRightTriggerDown() || (single && driver.isRightTriggerDown());
+        final boolean rightBumper = operator.isRightBumperDown() ; // || (single && driver.isRightBumperDown());
+        final boolean leftTrigger = operator.isLeftTriggerDown() || (single && driver.isLeftTriggerDown());
+        final boolean leftBumper = operator.isLeftBumperDown() ; // || (single && driver.isLeftBumperDown());
+
+        if (rightTrigger) {
+            claw.setModeSafe(ClawMode.BALL);
+            claw.setState(ClawState.INTAKE);
+        }
+        else if (leftTrigger) {
+            claw.setModeSafe(ClawMode.HATCH);
+            claw.setState(ClawState.INTAKE);
+        }
+        else if (rightBumper) {
+            claw.setModeSafe(ClawMode.BALL);
+            claw.setState(ClawState.OUTTAKE);
+        }
+        else if (leftBumper) {
+            claw.setModeSafe(ClawMode.HATCH);
+            claw.setState(ClawState.OUTTAKE);
+        }
+        else {
+            claw.setState(ClawState.OFF);
+        }
     }
 
     public static final synchronized Input getInstance() {
