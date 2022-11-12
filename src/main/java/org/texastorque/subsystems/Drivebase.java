@@ -229,9 +229,10 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         if (state == DrivebaseState.ZERO_WHEELS) {
             zeroWheels();
         } else {
-            if (creepTimeout.calculate(creepClick.calculate(elevator.isOutaking())))
-                elevatorCreep();
-            else if (state == DrivebaseState.DRIVING)
+            //if (creepTimeout.calculate(creepClick.calculate()))
+                //elevatorCreep();
+            // else 
+            if (state == DrivebaseState.DRIVING)
                 normalDriving(mode);
             else if (state == DrivebaseState.GOTO_POS_ODOM)
                 gotoDesiredPosition();

@@ -74,20 +74,21 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Lift Dir", liftDirection.toString());
         SmartDashboard.putString("Climber State", state.toString());
       
-        // if (state == ElevatorState.POSITION) {
-        //     SmartDashboard.putNumber("ReqLPos", liftPos);
-        //     lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
-        //     lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
-        // } else if (state == ElevatorState.EXTEND) {
-        //     lift.setPercent(LIFT_SPEED);
-        //     lift2.setPercent(-LIFT_SPEED);
-        // } else if (state == ElevatorState.RETRACT) {
-        //     lift.setPercent(-LIFT_SPEED);
-        //     lift2.setPercent(LIFT_SPEED);
-        // } else {
+        if (state == ElevatorState.POSITION) {
+            SmartDashboard.putNumber("ReqLPos", liftPos);
+            lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
+            lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
+
+        } else if (state == ElevatorState.EXTEND) {
+            lift.setPercent(LIFT_SPEED);
+            lift2.setPercent(-LIFT_SPEED);
+        } else if (state == ElevatorState.RETRACT) {
+            lift.setPercent(-LIFT_SPEED);
+            lift2.setPercent(LIFT_SPEED);
+        } else {
             lift.setPercent(0);
             lift2.setPercent(0);
-        // }
+        }
     }
 
     public static final synchronized Elevator getInstance() {

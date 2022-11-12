@@ -107,9 +107,16 @@ public final class Input extends TorqueInput<TorqueController> implements Subsys
     private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0., 40., 96.);
 
     private final void updateElevator() {
-        elevator.setState(ElevatorState.POSITION);
-        elevatorPos.calculate(operator.isDPADDownDown() || (single && driver.isDPADDownDown()),
-                operator.isDPADUpDown() || (single && driver.isDPADUpDown()));
+        // elevator.setState(ElevatorState.POSITION);
+        // elevatorPos.calculate(operator.isDPADDownDown() || (single && driver.isDPADDownDown()),
+        //         operator.isDPADUpDown() || (single && driver.isDPADUpDown()));
+
+        if (operator.isDPADDownDown())
+            elevator.setState(ElevatorState.RETRACT);
+        else if (operator.isDPADUpDown())
+            elevator.setState(ElevatorState.EXTEND);
+        else 
+            elevator.setState(ElevatorState.OFF);
 
         elevator.setLiftPos(elevatorPos.get());
     }
