@@ -25,7 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public final class Elevator extends TorqueSubsystem implements Subsystems {
     private static volatile Elevator instance;
 
-    public static final double LIFT_UP = 108., LIFT_BOTTOM = 0, LIFT_SPEED = .8;
+    public static final double LIFT_UP = 95., LIFT_BOTTOM = 0, LIFT_SPEED = .3;
 
     private double liftPos;
 
@@ -65,7 +65,7 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
     }
 
     public void setLiftPos(double position) {
-        liftPos = position;
+        liftPos = TorqueMath.constrain(position, LIFT_BOTTOM, LIFT_UP);
     }
 
     @Override

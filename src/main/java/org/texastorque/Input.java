@@ -104,21 +104,30 @@ public final class Input extends TorqueInput<TorqueController> implements Subsys
         drivebase.setSpeeds(new ChassisSpeeds(xVelo, yVelo, rVelo));
     }
 
-    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0., 40., 96.);
+    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0., 30., 60., 90.);
+
+    private final TorqueClick elevatorModeClick = new TorqueClick();
+    private boolean elevatorUsePosition = false;
 
     private final void updateElevator() {
-        // elevator.setState(ElevatorState.POSITION);
-        // elevatorPos.calculate(operator.isDPADDownDown() || (single && driver.isDPADDownDown()),
-        //         operator.isDPADUpDown() || (single && driver.isDPADUpDown()));
 
-        if (operator.isDPADDownDown())
-            elevator.setState(ElevatorState.RETRACT);
-        else if (operator.isDPADUpDown())
-            elevator.setState(ElevatorState.EXTEND);
-        else 
-            elevator.setState(ElevatorState.OFF);
+        if (elevatorModeClick.calculate(operator.isAButtonDown()))
+            elevatorUsePosition = !elevatorUsePosition;
 
-        elevator.setLiftPos(elevatorPos.get());
+        if (elevatorUsePosition) {
+            elevator.setState(ElevatorState.POSITION);
+            elevatorPos.calculate(operator.isDPADDownDown() || (single && driver.isDPADDownDown()),
+                    operator.isDPADUpDown() || (single && driver.isDPADUpDown()));
+            elevator.setLiftPos(elevatorPos.get());
+        } else {
+            if (operator.isDPADDownDown())
+                elevator.setState(ElevatorState.RETRACT);
+            else if (operator.isDPADUpDown())
+                elevator.setState(ElevatorState.EXTEND);
+            else 
+                elevator.setState(ElevatorState.OFF);
+            }
+
     }
 
     public final void updateClaw() {
