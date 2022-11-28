@@ -15,7 +15,8 @@ import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueTimeout;
-import org.texastorque.torquelib.motors.TorqueSparkMax;
+import org.texastorque.torquelib.motors.legacy.TorqueSparkMax;
+
 import org.texastorque.torquelib.util.TorqueMath;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;

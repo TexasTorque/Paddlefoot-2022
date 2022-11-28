@@ -104,7 +104,7 @@ public final class Input extends TorqueInput<TorqueController> implements Subsys
         drivebase.setSpeeds(new ChassisSpeeds(xVelo, yVelo, rVelo));
     }
 
-    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(0., 30., 60., 90.);
+    private final TorqueTraversableSelection<Double> elevatorPos = new TorqueTraversableSelection<Double>(15., 30., 60., 90.);
 
     private final TorqueClick elevatorModeClick = new TorqueClick();
     private boolean elevatorUsePosition = false;
@@ -113,6 +113,7 @@ public final class Input extends TorqueInput<TorqueController> implements Subsys
 
         if (elevatorModeClick.calculate(operator.isAButtonDown()))
             elevatorUsePosition = !elevatorUsePosition;
+
 
         if (elevatorUsePosition) {
             elevator.setState(ElevatorState.POSITION);

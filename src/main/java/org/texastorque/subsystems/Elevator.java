@@ -15,7 +15,8 @@ import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueTimeout;
-import org.texastorque.torquelib.motors.TorqueSparkMax;
+import org.texastorque.torquelib.motors.legacy.TorqueSparkMax;
+
 import org.texastorque.torquelib.util.TorqueMath;
 
 import edu.wpi.first.wpilibj.PneumaticsModuleType;
@@ -43,10 +44,15 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
 
     private TorqueDirection liftDirection = TorqueDirection.OFF;
 
+    private final TorquePID pid = TorquePID.create(.01).build();
+
+    private final double offset;
+
     private Elevator() {
         lift = new TorqueSparkMax(Ports.CLIMBER.LIFT.RIGHT);
         lift2 = new TorqueSparkMax(Ports.CLIMBER.LIFT.LEFT);
-
+        //lift.configurePID(pid);
+        offset = -lift.getPosition();
     }
 
     @Override
@@ -74,11 +80,14 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("Lift Dir", liftDirection.toString());
         SmartDashboard.putString("Climber State", state.toString());
       
-        if (state == ElevatorState.POSITION) {
-            SmartDashboard.putNumber("ReqLPos", liftPos);
-            lift.setPosition(TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
-            lift2.setPosition(-TorqueMath.linearConstraint(liftPos, lift.getPosition(), LIFT_BOTTOM, LIFT_UP));
+        SmartDashboard.putNumber("ReqLPos", liftPos);
 
+        final double pidOut = pid.calculate(lift.getPosition() + offset, liftPos);
+        SmartDashboard.putNumber("EPIDO", pidOut);
+
+        if (state == ElevatorState.POSITION) {
+            lift.setPercent(pidOut * LIFT_SPEED);
+            lift2.setVoltage(-lift.getVoltage());
         } else if (state == ElevatorState.EXTEND) {
             lift.setPercent(LIFT_SPEED);
             lift2.setPercent(-LIFT_SPEED);
@@ -89,6 +98,7 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
             lift.setPercent(0);
             lift2.setPercent(0);
         }
+
     }
 
     public static final synchronized Elevator getInstance() {
