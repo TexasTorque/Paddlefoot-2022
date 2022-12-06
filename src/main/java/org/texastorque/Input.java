@@ -111,23 +111,22 @@ public final class Input extends TorqueInput<TorqueController> implements Subsys
 
     private final void updateElevator() {
 
-        if (elevatorModeClick.calculate(operator.isAButtonDown()))
-            elevatorUsePosition = !elevatorUsePosition;
+        //if (elevatorModeClick.calculate(operator.isAButtonDown()))
+            // elevatorUsePosition = !elevatorUsePosition;
 
 
-        if (elevatorUsePosition) {
-            elevator.setState(ElevatorState.POSITION);
-            elevatorPos.calculate(operator.isDPADDownDown() || (single && driver.isDPADDownDown()),
-                    operator.isDPADUpDown() || (single && driver.isDPADUpDown()));
-            elevator.setLiftPos(elevatorPos.get());
-        } else {
+        // if (elevatorUsePosition) {
+        //     elevator.setState(ElevatorState.POSITION);
+        //     elevatorPos.calculate(operator.isDPADDownDown() || (single && driver.isDPADDownDown()),
+        //             operator.isDPADUpDown() || (single && driver.isDPADUpDown()));
+        //     elevator.setLiftPos(elevatorPos.get());
+        // } else 
             if (operator.isDPADDownDown())
                 elevator.setState(ElevatorState.RETRACT);
             else if (operator.isDPADUpDown())
                 elevator.setState(ElevatorState.EXTEND);
             else 
                 elevator.setState(ElevatorState.OFF);
-            }
 
     }
 

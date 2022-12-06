@@ -51,12 +51,13 @@ public final class Claw extends TorqueSubsystem implements Subsystems {
     public final void setModeSafe(final ClawMode mode) {
         if (mode != this.mode && !hasItem)
             this.mode = mode;
+        this.mode = ClawMode.BALL;
     }
 
     public final ClawMode getMode() { return mode; }
 
     public static enum ClawState {
-        INTAKE(1), OUTTAKE(-1), OFF(0);
+        INTAKE(1), OUTTAKE(-.4), OFF(0);
 
         public final double speed;
 
