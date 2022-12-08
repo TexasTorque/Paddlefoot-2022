@@ -16,7 +16,6 @@ import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueTimeout;
 import org.texastorque.torquelib.motors.TorqueNEO;
-import org.texastorque.torquelib.motors.legacy.TorqueSparkMax;
 
 import org.texastorque.torquelib.util.TorqueMath;
 
@@ -27,7 +26,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public final class Elevator extends TorqueSubsystem implements Subsystems {
     private static volatile Elevator instance;
 
-    public static final double LIFT_UP = 110., LIFT_BOTTOM = 0, VOLTS = 5;
+    public static final double LIFT_UP = 110., LIFT_BOTTOM = 0, VOLTS = 6;
 
     private final TorqueNEO lift;
 
@@ -43,7 +42,7 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
 
     private TorqueDirection liftDirection = TorqueDirection.OFF;
 
-    private final TorquePID pid = TorquePID.create(.01).build();
+    private final TorquePID pid = TorquePID.create(.015).build();
 
     private Elevator() {
         lift = new TorqueNEO(Ports.CLIMBER.LIFT.RIGHT);
@@ -63,6 +62,7 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
 
         SmartDashboard.putNumber("LIFTDIR", liftDirection.get());
         SmartDashboard.putNumber("Climber Lift Position", lift.getPosition());
+        SmartDashboard.putNumber("Elevator Current", lift.getCurrent());
 
         if (state == ElevatorState.EXTEND)
             if (lift.getPosition() > LIFT_UP)

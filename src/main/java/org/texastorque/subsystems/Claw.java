@@ -15,8 +15,7 @@ import org.texastorque.torquelib.base.TorqueSubsystem;
 import org.texastorque.torquelib.control.TorqueClick;
 import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueTimeout;
-import org.texastorque.torquelib.motors.legacy.TorqueSparkMax;
-
+import org.texastorque.torquelib.motors.TorqueNEO;
 import org.texastorque.torquelib.util.TorqueMath;
 
 import edu.wpi.first.wpilibj.DoubleSolenoid;
@@ -68,12 +67,12 @@ public final class Claw extends TorqueSubsystem implements Subsystems {
 
     public final void setState(final ClawState state) { this.state = state; }
 
-    private final TorqueSparkMax roller;
+    private final TorqueNEO roller;
     //private final Solenoid jaw;
     private final DoubleSolenoid jaw;
 
     private Claw() {
-        roller = new TorqueSparkMax(Ports.CLIMBER.HATCH);
+        roller = new TorqueNEO(Ports.CLIMBER.HATCH);
         //jaw = new Solenoid(PneumaticsModuleType.REVPH, 0);
         jaw = new DoubleSolenoid(PneumaticsModuleType.REVPH, 0, 1);
     }
