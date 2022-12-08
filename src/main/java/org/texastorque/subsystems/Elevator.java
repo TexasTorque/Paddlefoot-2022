@@ -48,6 +48,7 @@ public final class Elevator extends TorqueSubsystem implements Subsystems {
     private Elevator() {
         lift = new TorqueNEO(Ports.CLIMBER.LIFT.RIGHT);
         lift.addFollower(Ports.CLIMBER.LIFT.LEFT, true);
+        lift.setCurrentLimit(10);
     }
 
     @Override
