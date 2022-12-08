@@ -43,7 +43,6 @@ import org.texastorque.torquelib.sensors.TorqueLight;
 import org.texastorque.torquelib.sensors.TorqueNavXGyro;
 import org.texastorque.torquelib.sensors.util.TorqueAprilTagMap;
 import org.texastorque.torquelib.util.TorqueMath;
-import org.texastorque.torquelib.util.TorqueSwerveOdometry;
 import org.texastorque.torquelib.util.TorqueUtil;
 
 /**
@@ -146,7 +145,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         // odometry = new TorqueSwerveOdometry(kinematics, gyro.getRotation2dClockwise());
 
         // Instantiating the pose estimator
-        poseEstimator = new SwerveDrivePoseEstimator(gyro.getRotation2dClockwise().times(-1),
+        poseEstimator = new SwerveDrivePoseEstimator(gyro.getHeadingCW().times(-1),
                 new Pose2d(), kinematics, STATE_STDS,
                 LOCAL_STDS, VISION_STDS);
 
@@ -195,7 +194,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
 
         frontLeft.getState().angle.times(-1);
 
-        poseEstimator.update(gyro.getRotation2dClockwise().times(-1),
+        poseEstimator.update(gyro.getHeadingCW().times(-1),
                 invertedSwerveModuleState(frontLeft.getState()),
                 invertedSwerveModuleState(frontRight.getState()),
                 invertedSwerveModuleState(backLeft.getState()), 
@@ -262,7 +261,7 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
                     speeds.vxMetersPerSecond * DRIVE_MAX_TRANSLATIONAL_SPEED,
                     speeds.vyMetersPerSecond * DRIVE_MAX_TRANSLATIONAL_SPEED,
                     speeds.omegaRadiansPerSecond * DRIVE_MAX_ROTATIONAL_SPEED,
-                    gyro.getRotation2dClockwise());
+                    gyro.getHeadingCW());
 
     }
 
@@ -315,8 +314,8 @@ public final class Drivebase extends TorqueSubsystem implements Subsystems {
         SmartDashboard.putString("OdomPos", String.format("(%02.3f, %02.3f)", getPose().getX(), getPose().getY()));
 
         SmartDashboard.putNumber("Odom Rot", getPose().getRotation().getDegrees());
-        SmartDashboard.putNumber("Gyro Rot", gyro.getRotation2dClockwise().getDegrees());
-        SmartDashboard.putNumber("Gyro Rot -1", gyro.getRotation2dClockwise().times(-1).getDegrees());
+        SmartDashboard.putNumber("Gyro Rot", gyro.getHeadingCW().getDegrees());
+        SmartDashboard.putNumber("Gyro Rot -1", gyro.getHeadingCW().times(-1).getDegrees());
 
         SmartDashboard.putString("Speeds", String.format("(%02.3f, %02.3f, %02.3f)", speeds.vxMetersPerSecond,
                 speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond));

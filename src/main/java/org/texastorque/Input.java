@@ -20,7 +20,6 @@ import org.texastorque.torquelib.control.TorquePID;
 import org.texastorque.torquelib.control.TorqueSlewLimiter;
 import org.texastorque.torquelib.control.TorqueTraversableSelection;
 import org.texastorque.torquelib.sensors.TorqueController;
-import org.texastorque.torquelib.util.GenericController;
 import org.texastorque.torquelib.util.TorqueMath;
 import org.texastorque.torquelib.util.TorqueUtil;
 

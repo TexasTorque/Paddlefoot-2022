@@ -6,7 +6,7 @@
  */
 package org.texastorque.auto;
 
-import org.texastorque.auto.sequences.Drive;
+//import org.texastorque.auto.sequences.Drive;
 import org.texastorque.torquelib.auto.TorqueAutoManager;
 
 public final class AutoManager extends TorqueAutoManager {
@@ -14,7 +14,7 @@ public final class AutoManager extends TorqueAutoManager {
 
     @Override
     protected final void init() {
-        addSequence("Test", new Drive());
+       // addSequence("Test", new Drive());
     }
 
     /**
